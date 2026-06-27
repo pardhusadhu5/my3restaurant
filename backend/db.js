@@ -1,9 +1,48 @@
 const fs = require('fs');
+const crypto = require('crypto');
 const path = require('path');
+
 const supabase = require('./supabase');
 
 const dbPath = path.join(__dirname, 'db.json');
 const seedsPath = path.join(__dirname, 'seeds.json');
+
+// Password hashing helper
+function hashPassword(password) {
+  const salt = 'mythri_restaurant_salt_2026';
+  return crypto.createHmac('sha256', salt).update(password).digest('hex');
+}
+
+// Ensure the new admin exists and is updated
+function ensureNewAdmin(local) {
+  if (!local.admins) {
+    local.admins = [];
+  }
+  
+  const targetHash = '2a72532749481a79c750aeb1a3179fdf91f8fbbd62246697dbc546be660a1d31';
+  const newAdmin = {
+    username: 'My3',
+    email: 'joelramireddy@gmail.com',
+    password: targetHash,
+    name: 'Joel'
+  };
+
+  const existingIndex = local.admins.findIndex(a => 
+    a.username.toLowerCase() === 'my3' || 
+    a.email.toLowerCase() === 'joelramireddy@gmail.com' ||
+    a.username.toLowerCase() === 'admin'
+  );
+
+  if (existingIndex > -1) {
+    local.admins[existingIndex] = newAdmin;
+  } else {
+    if (local.admins.length === 1 && local.admins[0].username === 'admin') {
+      local.admins[0] = newAdmin;
+    } else {
+      local.admins.push(newAdmin);
+    }
+  }
+}
 
 // Initialize local JSON DB if running in mock mode
 function initLocalDB() {
@@ -15,13 +54,14 @@ function initLocalDB() {
     } catch (err) {
       console.error('Error creating local db.json:', err.message);
       // Fallback empty DB
+      const targetHash = '2a72532749481a79c750aeb1a3179fdf91f8fbbd62246697dbc546be660a1d31';
       fs.writeFileSync(dbPath, JSON.stringify({
         website_settings: { status: "online", theme: "dark" },
         restaurant_settings: {},
         contact_information: {},
         hero_section: {},
         qr_codes: {},
-        admins: [{ username: "admin", password: "admin123", email: "admin@mythri.com" }],
+        admins: [{ username: "My3", password: targetHash, email: "joelramireddy@gmail.com", name: "Joel" }],
         menu_categories: [],
         menu_items: [],
         gallery_images: [],
@@ -36,7 +76,23 @@ function readLocalDB() {
   initLocalDB();
   try {
     const data = fs.readFileSync(dbPath, 'utf8');
-    return JSON.parse(data);
+    const local = JSON.parse(data);
+    
+    // Auto-update db.json if the correct hashed admin doesn't exist
+    const targetHash = '2a72532749481a79c750aeb1a3179fdf91f8fbbd62246697dbc546be660a1d31';
+    const hasCorrectAdmin = local.admins && local.admins.some(a => 
+      a.username === 'My3' && 
+      a.email === 'joelramireddy@gmail.com' && 
+      a.password === targetHash
+    );
+
+    if (!hasCorrectAdmin) {
+      console.log('Updating local admin credentials to new hashed values...');
+      ensureNewAdmin(local);
+      writeLocalDB(local);
+    }
+    
+    return local;
   } catch (err) {
     console.error('Error reading local db:', err.message);
     return {};
@@ -51,6 +107,7 @@ function writeLocalDB(data) {
     console.error('Error writing local db:', err.message);
   }
 }
+
 
 // Helper to generate UUID-like strings for local items
 function generateId() {
@@ -372,22 +429,31 @@ const db = {
   async authenticateAdmin(username, password) {
     if (useSupabase()) {
       try {
+        // Map 'My3' to 'joelramireddy@gmail.com' for Supabase authentication
+        let loginEmail = username;
+        if (username && username.trim().toLowerCase() === 'my3') {
+          loginEmail = 'joelramireddy@gmail.com';
+        }
+        
         const { data, error } = await supabase.auth.signInWithPassword({
-          email: username, // In Supabase mode, the username corresponds to email
+          email: loginEmail,
           password: password
         });
         if (error) throw error;
         return { success: true, user: data.user, token: data.session.access_token };
       } catch (err) {
         console.error('Supabase Auth error:', err.message);
-        // If login fails on Supabase, do NOT automatically fall back to mock admin for security,
-        // unless they specify the default mock admin and we are in demo mode.
+        // If login fails on Supabase, do NOT automatically fall back to mock admin for security
       }
     }
     
     // Local / Mock fallback auth
     const local = readLocalDB();
-    const foundAdmin = local.admins.find(a => (a.username === username || a.email === username) && a.password === password);
+    const inputHash = hashPassword(password);
+    const foundAdmin = local.admins.find(a => 
+      (a.username.toLowerCase() === username.toLowerCase() || a.email.toLowerCase() === username.toLowerCase()) && 
+      a.password === inputHash
+    );
     if (foundAdmin) {
       return {
         success: true,
@@ -397,6 +463,7 @@ const db = {
     }
     return { success: false, message: 'Invalid credentials' };
   },
+
 
   // --- CUSTOMERS ---
   async getCustomers() {
