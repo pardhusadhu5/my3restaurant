@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+
 import { api } from '../services/api';
 import { 
   LayoutDashboard, 
@@ -84,6 +85,19 @@ export default function AdminDashboard({
   // Order states
   const [orderSearch, setOrderSearch] = useState('');
   const [orderFilter, setOrderFilter] = useState('All');
+
+  // Handle mobile body scroll lock when sidebar is open
+  useEffect(() => {
+    if (isSidebarOpen) {
+      document.body.classList.add('overflow-hidden');
+    } else {
+      document.body.classList.remove('overflow-hidden');
+    }
+    // Clean up when unmounting
+    return () => {
+      document.body.classList.remove('overflow-hidden');
+    };
+  }, [isSidebarOpen]);
 
   const getCustomerNameByPhone = (phone) => {
     const d = discounts.find(x => x.customer_phone === phone);
@@ -458,7 +472,8 @@ export default function AdminDashboard({
       {/* --- SIDEBAR --- */}
       <aside className={`
         fixed inset-y-0 left-0 z-40 w-64 bg-[#0a0a0c] border-r border-zinc-900 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:flex lg:flex-col
-        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-0 lg:translate-x-0'}
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+
       `}>
         <div className="h-16 px-6 border-b border-zinc-900 flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -500,8 +515,9 @@ export default function AdminDashboard({
             </div>
           </div>
           <button 
-            onClick={onLogout}
+            onClick={() => { setIsSidebarOpen(false); onLogout(); }}
             className="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-xl border border-red-500/10 text-red-400 hover:bg-red-950/15 transition-colors text-sm font-semibold"
+
           >
             <LogOut size={16} />
             <span>Sign Out</span>
