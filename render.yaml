@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: mythri-family-restaurant
+    env: node
+    plan: free
+    buildCommand: npm run build
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: SUPABASE_URL
+        sync: false
+        description: "Your Supabase project URL (e.g. https://xxxxxx.supabase.co)"
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+        description: "Your Supabase service_role secret key"
+      - key: SUPABASE_KEY
+        sync: false
+        description: "Your Supabase anon public key"
