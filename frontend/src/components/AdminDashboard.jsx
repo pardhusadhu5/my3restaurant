@@ -1,0 +1,2125 @@
+import React, { useState } from 'react';
+import { api } from '../services/api';
+import { 
+  LayoutDashboard, 
+  Utensils, 
+  Flame, 
+  Info, 
+  Phone, 
+  Image as ImageIcon, 
+  QrCode, 
+  Home, 
+  Star, 
+  Settings, 
+  User, 
+  LogOut, 
+  Plus, 
+  Edit, 
+  Trash2, 
+  Eye, 
+  EyeOff, 
+  Upload, 
+  Save, 
+  Check,
+  RefreshCw,
+  Search,
+  Download,
+  Gift,
+  ShoppingBag
+} from 'lucide-react';
+
+export default function AdminDashboard({ 
+  isAdmin, 
+  adminUser, 
+  onLogout,
+  websiteSettings,
+  restaurantSettings,
+  contactInfo,
+  heroSection,
+  qrCode,
+  categories,
+  menuItems,
+  gallery,
+  reviews,
+  orders = [],
+  discounts = []
+}) {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
+
+  // Forms states
+  const [categoryForm, setCategoryForm] = useState({ name: '', display_order: 0, isEdit: false, id: null });
+  const [itemForm, setItemForm] = useState({ name: '', price: '', category_id: '', description: '', image_url: '', status: 'visible', display_order: 0, isEdit: false, id: null });
+  const [infoForm, setInfoForm] = useState({ ...restaurantSettings });
+  const [contactForm, setContactForm] = useState({ ...contactInfo });
+  const [heroForm, setHeroForm] = useState({ ...heroSection });
+  const [qrForm, setQrForm] = useState({ ...qrCode });
+  const [reviewForm, setReviewForm] = useState({ customer_name: '', review_text: '', rating: 5, photo_url: '', status: 'visible', isEdit: false, id: null });
+  const [galleryForm, setGalleryForm] = useState({ image_url: '', category: 'Food', display_order: 0 });
+  const [settingsForm, setSettingsForm] = useState({ ...websiteSettings });
+
+  // Filtering states
+  const [menuSearch, setMenuSearch] = useState('');
+  const [menuFilterCat, setMenuFilterCat] = useState('all');
+
+  // Discount states & forms
+  const [discountSearch, setDiscountSearch] = useState('');
+  const [discountFilter, setDiscountFilter] = useState('All');
+  const [assignForm, setAssignForm] = useState({
+    customer_phone: '',
+    discount_type: 'percentage',
+    discount_value: '',
+    minimum_order_amount: '',
+    maximum_discount: '',
+    expiry_date: '',
+    notes: '',
+    status: 'Active',
+    isEdit: false,
+    id: null
+  });
+
+  // Order states
+  const [orderSearch, setOrderSearch] = useState('');
+  const [orderFilter, setOrderFilter] = useState('All');
+
+  const getCustomerNameByPhone = (phone) => {
+    const d = discounts.find(x => x.customer_phone === phone);
+    if (d && d.notes && d.notes.startsWith('For: ')) {
+      return d.notes.substring(5).split(' |')[0];
+    }
+    const order = orders.find(o => o.customer_phone === phone);
+    return order ? order.customer_name : 'New Customer';
+  };
+
+  const handleDiscountSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setActionLoading(true);
+      const discountData = {
+        customer_phone: assignForm.customer_phone.replace(/\D/g, ''),
+        discount_type: assignForm.discount_type,
+        discount_value: parseFloat(assignForm.discount_value) || 0,
+        minimum_order_amount: parseFloat(assignForm.minimum_order_amount) || 0,
+        maximum_discount: assignForm.maximum_discount ? parseFloat(assignForm.maximum_discount) : null,
+        expiry_date: assignForm.expiry_date || null,
+        notes: assignForm.notes,
+        status: assignForm.status
+      };
+
+      if (assignForm.isEdit) {
+        await api.updateDiscount(assignForm.id, discountData);
+        triggerSuccess('Discount updated successfully!');
+      } else {
+        await api.createDiscount(discountData);
+        triggerSuccess('Discount assigned successfully!');
+      }
+      
+      setAssignForm({
+        customer_phone: '',
+        discount_type: 'percentage',
+        discount_value: '',
+        minimum_order_amount: '',
+        maximum_discount: '',
+        expiry_date: '',
+        notes: '',
+        status: 'Active',
+        isEdit: false,
+        id: null
+      });
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteDiscount = async (id) => {
+    if (confirm('Are you sure you want to delete this discount?')) {
+      try {
+        await api.deleteDiscount(id);
+        triggerSuccess('Discount deleted successfully!');
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+  };
+
+  const handleUpdateOrderStatus = async (id, status) => {
+    try {
+      await api.updateOrderStatus(id, { order_status: status });
+      triggerSuccess(`Order status changed to ${status}`);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleUpdatePaymentStatus = async (id, status) => {
+    try {
+      await api.updateOrderStatus(id, { payment_status: status });
+      triggerSuccess(`Payment status changed to ${status}`);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  // Computed stats for Dashboard & Panels
+  const totalDiscounts = discounts.length;
+  const activeDiscounts = discounts.filter(d => d.status === 'Active').length;
+  const usedDiscounts = discounts.filter(d => d.status === 'Used').length;
+  const expiredDiscounts = discounts.filter(d => d.status === 'Expired').length;
+  const totalDiscountValueGiven = discounts
+    .filter(d => d.status === 'Used')
+    .reduce((acc, d) => {
+      const order = orders.find(o => o.discount_id === d.id);
+      return acc + (order ? order.discount_amount : 0);
+    }, 0);
+
+  const totalOrdersCount = orders.length;
+  const completedOrdersCount = orders.filter(o => o.order_status === 'Completed').length;
+  const totalRevenue = orders
+    .filter(o => o.payment_status === 'Paid')
+    .reduce((acc, o) => acc + o.final_amount, 0);
+
+  // Trigger temporary success notification
+  const triggerSuccess = (msg) => {
+    setSuccessMsg(msg);
+    setTimeout(() => setSuccessMsg(''), 3000);
+  };
+
+  // Redirect if not logged in
+  if (!isAdmin) {
+    window.location.hash = '#/login';
+    return null;
+  }
+
+  // --- IMAGE UPLOAD HELPER ---
+  const handleImageUpload = async (e, onUrlChange) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      setUploading(true);
+      const res = await api.uploadImage(file);
+      if (res.success) {
+        onUrlChange(res.file_path);
+        triggerSuccess('Image uploaded successfully!');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Upload failed: ' + err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // --- SUBMIT HANDLERS ---
+
+  // Category Submit
+  const handleCategorySubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setActionLoading(true);
+      if (categoryForm.isEdit) {
+        await api.updateCategory(categoryForm.id, { name: categoryForm.name, display_order: categoryForm.display_order });
+        triggerSuccess('Category updated!');
+      } else {
+        await api.createCategory(categoryForm.name, categoryForm.display_order);
+        triggerSuccess('Category created!');
+      }
+      setCategoryForm({ name: '', display_order: 0, isEdit: false, id: null });
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Menu Item Submit
+  const handleItemSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setActionLoading(true);
+      const itemData = {
+        name: itemForm.name,
+        price: parseFloat(itemForm.price) || 0,
+        category_id: itemForm.category_id,
+        description: itemForm.description,
+        image_url: itemForm.image_url,
+        status: itemForm.status,
+        display_order: parseInt(itemForm.display_order) || 0
+      };
+
+      if (itemForm.isEdit) {
+        await api.updateMenuItem(itemForm.id, itemData);
+        triggerSuccess('Menu item updated!');
+      } else {
+        if (!itemData.category_id && categories.length > 0) {
+          itemData.category_id = categories[0].id;
+        }
+        await api.createMenuItem(itemData);
+        triggerSuccess('Menu item created!');
+      }
+      setItemForm({ name: '', price: '', category_id: '', description: '', image_url: '', status: 'visible', display_order: 0, isEdit: false, id: null });
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Restaurant Info Submit
+  const handleInfoSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setActionLoading(true);
+      await api.updateRestaurantSettings(infoForm);
+      triggerSuccess('Restaurant settings saved!');
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Contact Info Submit
+  const handleContactSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setActionLoading(true);
+      await api.updateContactInformation(contactForm);
+      triggerSuccess('Contact information saved!');
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Hero Section Submit
+  const handleHeroSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setActionLoading(true);
+      await api.updateHeroSection(heroForm);
+      triggerSuccess('Hero section settings saved!');
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // QR Code Submit
+  const handleQrSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setActionLoading(true);
+      await api.updateQRCode(qrForm);
+      triggerSuccess('QR menu details saved!');
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Review Submit
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setActionLoading(true);
+      if (reviewForm.isEdit) {
+        await api.updateReview(reviewForm.id, reviewForm);
+        triggerSuccess('Review updated!');
+      } else {
+        await api.addReview(reviewForm);
+        triggerSuccess('Review added!');
+      }
+      setReviewForm({ customer_name: '', review_text: '', rating: 5, photo_url: '', status: 'visible', isEdit: false, id: null });
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Gallery Image Submit
+  const handleGallerySubmit = async (e) => {
+    e.preventDefault();
+    if (!galleryForm.image_url) {
+      alert('Please upload or enter an image URL');
+      return;
+    }
+    try {
+      setActionLoading(true);
+      await api.addGalleryImage(galleryForm.image_url, galleryForm.category, galleryForm.display_order);
+      triggerSuccess('Image added to gallery!');
+      setGalleryForm({ image_url: '', category: 'Food', display_order: 0 });
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Website Global Settings Submit
+  const handleSettingsSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setActionLoading(true);
+      await api.updateWebsiteSettings(settingsForm);
+      triggerSuccess('Global website settings saved!');
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Delete Handlers
+  const handleDeleteCategory = async (id) => {
+    if (confirm('Are you sure? This will delete all dishes inside this category too!')) {
+      try {
+        await api.deleteCategory(id);
+        triggerSuccess('Category deleted');
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+  };
+
+  const handleDeleteItem = async (id) => {
+    if (confirm('Delete this menu item?')) {
+      try {
+        await api.deleteMenuItem(id);
+        triggerSuccess('Menu item deleted');
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+  };
+
+  const handleDeleteReview = async (id) => {
+    if (confirm('Delete this review?')) {
+      try {
+        await api.deleteReview(id);
+        triggerSuccess('Review deleted');
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+  };
+
+  const handleDeleteGallery = async (id) => {
+    if (confirm('Delete this image from gallery?')) {
+      try {
+        await api.deleteGalleryImage(id);
+        triggerSuccess('Gallery image deleted');
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+  };
+
+  // Sidebar Menu Items
+  const menuList = [
+    { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
+    { id: 'menu', name: 'Menu Management', icon: Utensils },
+    { id: 'orders', name: 'Order History', icon: ShoppingBag },
+    { id: 'discounts', name: 'Customer Discounts', icon: Gift },
+    { id: 'info', name: 'Restaurant Settings', icon: Info },
+    { id: 'contact', name: 'Contact Info', icon: Phone },
+    { id: 'gallery', name: 'Gallery', icon: ImageIcon },
+    { id: 'qr', name: 'QR Menu Management', icon: QrCode },
+    { id: 'hero', name: 'Hero Customization', icon: Home },
+    { id: 'reviews', name: 'Customer Reviews', icon: Star },
+    { id: 'settings', name: 'Website Settings', icon: Settings },
+  ];
+
+  // Helper to resolve category name from ID
+  const getCatName = (id) => {
+    const cat = categories.find(c => c.id === id);
+    return cat ? cat.name : 'Unassigned';
+  };
+
+  return (
+    <div className="min-h-screen bg-[#070708] flex text-zinc-300">
+      
+      {/* SUCCESS MESSAGE FLOATER */}
+      {successMsg && (
+        <div className="fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl bg-zinc-900 border border-gold/30 text-gold flex items-center space-x-2 shadow-2xl animate-bounce">
+          <Check size={18} />
+          <span className="text-sm font-semibold">{successMsg}</span>
+        </div>
+      )}
+
+      {/* --- SIDEBAR --- */}
+      <aside className={`
+        fixed inset-y-0 left-0 z-40 w-64 bg-[#0a0a0c] border-r border-zinc-900 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:flex lg:flex-col
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-0 lg:translate-x-0'}
+      `}>
+        <div className="h-16 px-6 border-b border-zinc-900 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <img src="/MY3Logo.jpg" className="w-8 h-8 rounded-full object-cover border border-gold/30" alt="" />
+            <span className="text-white font-bold text-sm tracking-widest uppercase">Admin</span>
+          </div>
+          <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden text-zinc-400 hover:text-white">✕</button>
+        </div>
+
+        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+          {menuList.map(m => {
+            const Icon = m.icon;
+            return (
+              <button
+                key={m.id}
+                onClick={() => { setActiveTab(m.id); setIsSidebarOpen(false); }}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium tracking-wide transition-all duration-200
+                  ${activeTab === m.id 
+                    ? 'bg-gold/10 text-gold border-l-2 border-gold font-bold shadow-sm' 
+                    : 'text-zinc-400 hover:bg-zinc-900/60 hover:text-white'
+                  }
+                `}
+              >
+                <Icon size={18} />
+                <span>{m.name}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="p-4 border-t border-zinc-900">
+          <div className="flex items-center space-x-3 px-4 py-3 mb-4 rounded-xl bg-zinc-900/40">
+            <div className="w-8 h-8 rounded-full bg-gold/10 border border-gold/20 flex items-center justify-center text-gold font-bold">
+              {adminUser?.name ? adminUser.name[0].toUpperCase() : 'A'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-white truncate">{adminUser?.name || 'Administrator'}</p>
+              <p className="text-[10px] text-zinc-500 truncate">{adminUser?.email || 'admin@mythri.com'}</p>
+            </div>
+          </div>
+          <button 
+            onClick={onLogout}
+            className="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-xl border border-red-500/10 text-red-400 hover:bg-red-950/15 transition-colors text-sm font-semibold"
+          >
+            <LogOut size={16} />
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* BLOCKER FOR MOBILE SIDEBAR */}
+      {isSidebarOpen && (
+        <div 
+          onClick={() => setIsSidebarOpen(false)}
+          className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"
+        ></div>
+      )}
+
+      {/* --- MAIN CONTENT AREA --- */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
+        {/* Header */}
+        <header className="h-16 border-b border-zinc-900 bg-[#09090b]/80 backdrop-blur flex items-center justify-between px-6 sticky top-0 z-20">
+          <div className="flex items-center space-x-4">
+            <button 
+              onClick={() => setIsSidebarOpen(true)}
+              className="lg:hidden text-zinc-400 hover:text-white p-1"
+            >
+              ☰
+            </button>
+            <h1 className="text-lg font-bold text-white tracking-wide">
+              {menuList.find(m => m.id === activeTab)?.name}
+            </h1>
+          </div>
+          <div className="flex items-center space-x-3">
+            <a 
+              href="#/" 
+              className="px-4 py-1.5 rounded-lg border border-zinc-800 text-xs font-medium hover:bg-zinc-900 transition-all text-zinc-400 hover:text-white flex items-center space-x-1.5"
+            >
+              <span>Visit Site</span>
+              <span>↗</span>
+            </a>
+          </div>
+        </header>
+
+        {/* Dynamic Panels */}
+        <main className="p-6 md:p-8 flex-1">
+          
+          {/* ============================================================== */}
+          {/* TAB: DASHBOARD OVERVIEW */}
+          {/* ============================================================== */}
+          {activeTab === 'dashboard' && (
+            <div className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
+                
+                <div className="glass-panel p-5 rounded-2xl">
+                  <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider">Total Menu Items</p>
+                  <h3 className="text-3xl font-bold text-white font-serif mt-2">{menuItems.length}</h3>
+                  <div className="text-[10px] text-zinc-400 mt-1">Active inside menu</div>
+                </div>
+
+                <div className="glass-panel p-5 rounded-2xl">
+                  <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider">Total Orders Logged</p>
+                  <h3 className="text-3xl font-bold text-white font-serif mt-2">{totalOrdersCount}</h3>
+                  <div className="text-[10px] text-zinc-400 mt-1">{completedOrdersCount} completed checkouts</div>
+                </div>
+
+                <div className="glass-panel p-5 rounded-2xl">
+                  <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider">Total Revenue (Paid)</p>
+                  <h3 className="text-3xl font-bold text-gold font-serif mt-2">₹{totalRevenue.toFixed(2)}</h3>
+                  <div className="text-[10px] text-zinc-400 mt-1">From simulated payments</div>
+                </div>
+
+                <div className="glass-panel p-5 rounded-2xl">
+                  <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider">Active Discounts</p>
+                  <h3 className="text-3xl font-bold text-white font-serif mt-2">{activeDiscounts}</h3>
+                  <div className="text-[10px] text-zinc-400 mt-1">{usedDiscounts} used / {expiredDiscounts} expired</div>
+                </div>
+
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <div className="glass-panel p-6 rounded-2xl lg:col-span-2 space-y-4">
+                  <h3 className="text-base font-bold text-white font-serif tracking-wide border-b border-zinc-900 pb-3">Restaurant Quick Info</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-zinc-500 text-xs">Primary Phone</p>
+                      <p className="text-white font-semibold mt-0.5">{contactInfo.primary_phone || '9676576392'}</p>
+                    </div>
+                    <div>
+                      <p className="text-zinc-500 text-xs">WhatsApp Business Number</p>
+                      <p className="text-gold font-semibold mt-0.5">{contactInfo.whatsapp_number || '9676576392'}</p>
+                    </div>
+                    <div>
+                      <p className="text-zinc-500 text-xs">Opening Hours (Weekday)</p>
+                      <p className="text-white mt-0.5">{restaurantSettings.opening_hours?.weekday || '11:00 AM - 11:00 PM'}</p>
+                    </div>
+                    <div>
+                      <p className="text-zinc-500 text-xs">Website Status</p>
+                      <p className={`inline-flex items-center space-x-1.5 text-xs font-semibold px-2 py-0.5 rounded-full mt-1.5
+                        ${websiteSettings.status === 'online' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}
+                      `}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${websiteSettings.status === 'online' ? 'bg-green-400' : 'bg-amber-400'}`}></span>
+                        <span>{websiteSettings.status === 'online' ? 'Online' : 'Maintenance'}</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="glass-panel p-6 rounded-2xl space-y-4 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-base font-bold text-white font-serif tracking-wide border-b border-zinc-900 pb-3">Realtime CDC State</h3>
+                    <p className="text-zinc-400 text-xs mt-3 leading-relaxed">
+                      Your Mythri management console is actively connected to the server. Any changes you make to the menu, prices, or contact details propagate <strong>instantly</strong> to all open devices without requiring refreshes.
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-2 text-xs text-green-400 font-semibold pt-4">
+                    <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-ping"></span>
+                    <span>Live Synchronization Enabled</span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* TAB: MENU MANAGEMENT */}
+          {/* ============================================================== */}
+          {activeTab === 'menu' && (
+            <div className="space-y-8">
+              
+              {/* CATEGORIES MANAGEMENT SECTION */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                {/* Left Form: Add/Edit Category */}
+                <div className="glass-panel p-6 rounded-2xl space-y-4 h-fit">
+                  <h3 className="text-sm font-bold text-white font-serif tracking-wide border-b border-zinc-900 pb-3">
+                    {categoryForm.isEdit ? 'Edit Category' : 'Add New Category'}
+                  </h3>
+                  <form onSubmit={handleCategorySubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-zinc-500 text-xs mb-1">Category Name</label>
+                      <input 
+                        type="text"
+                        value={categoryForm.name}
+                        onChange={(e) => setCategoryForm(prev => ({ ...prev, name: e.target.value }))}
+                        className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                        placeholder="e.g., Starters"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-zinc-500 text-xs mb-1">Display Order</label>
+                      <input 
+                        type="number"
+                        value={categoryForm.display_order}
+                        onChange={(e) => setCategoryForm(prev => ({ ...prev, display_order: parseInt(e.target.value) || 0 }))}
+                        className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="flex space-x-2 pt-2">
+                      <button 
+                        type="submit" 
+                        disabled={actionLoading}
+                        className="flex-1 py-2 bg-gold hover:bg-gold-light text-black text-xs font-bold rounded-lg transition"
+                      >
+                        {categoryForm.isEdit ? 'Save Changes' : 'Add Category'}
+                      </button>
+                      {categoryForm.isEdit && (
+                        <button 
+                          type="button" 
+                          onClick={() => setCategoryForm({ name: '', display_order: 0, isEdit: false, id: null })}
+                          className="px-3 py-2 border border-zinc-800 hover:bg-zinc-900 text-zinc-400 text-xs font-semibold rounded-lg transition"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </form>
+                </div>
+
+                {/* Right List: Categories list */}
+                <div className="glass-panel p-6 rounded-2xl lg:col-span-2 space-y-4">
+                  <h3 className="text-sm font-bold text-white font-serif tracking-wide border-b border-zinc-900 pb-3">Available Categories</h3>
+                  
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-zinc-900 text-zinc-500 font-semibold">
+                          <th className="py-2.5">Name</th>
+                          <th className="py-2.5">Display Order</th>
+                          <th className="py-2.5 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {categories.map(c => (
+                          <tr key={c.id} className="border-b border-zinc-900/40 hover:bg-zinc-900/10">
+                            <td className="py-3 font-semibold text-white">{c.name}</td>
+                            <td className="py-3 text-zinc-400">{c.display_order}</td>
+                            <td className="py-3 text-right space-x-2">
+                              <button 
+                                onClick={() => setCategoryForm({ name: c.name, display_order: c.display_order, isEdit: true, id: c.id })}
+                                className="p-1 text-zinc-400 hover:text-gold transition"
+                              >
+                                <Edit size={14} />
+                              </button>
+                              <button 
+                                onClick={() => handleDeleteCategory(c.id)}
+                                className="p-1 text-zinc-400 hover:text-red-400 transition"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                        {categories.length === 0 && (
+                          <tr>
+                            <td colSpan="3" className="py-6 text-center text-zinc-600">No categories found. Create one first!</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+              </div>
+
+              <hr className="border-zinc-900" />
+
+              {/* DISHES MANAGEMENT SECTION */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                {/* Left Form: Add/Edit Dish */}
+                <div className="glass-panel p-6 rounded-2xl space-y-4 h-fit">
+                  <h3 className="text-sm font-bold text-white font-serif tracking-wide border-b border-zinc-900 pb-3">
+                    {itemForm.isEdit ? 'Edit Menu Dish' : 'Add New Menu Dish'}
+                  </h3>
+                  <form onSubmit={handleItemSubmit} className="space-y-4 text-xs">
+                    <div>
+                      <label className="block text-zinc-500 mb-1">Dish Name *</label>
+                      <input 
+                        type="text"
+                        value={itemForm.name}
+                        onChange={(e) => setItemForm(prev => ({ ...prev, name: e.target.value }))}
+                        className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                        placeholder="e.g., Mutton Biryani"
+                        required
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-zinc-500 mb-1">Price (₹) *</label>
+                        <input 
+                          type="number"
+                          step="0.01"
+                          value={itemForm.price}
+                          onChange={(e) => setItemForm(prev => ({ ...prev, price: e.target.value }))}
+                          className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                          placeholder="280.00"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-zinc-500 mb-1">Category *</label>
+                        <select
+                          value={itemForm.category_id}
+                          onChange={(e) => setItemForm(prev => ({ ...prev, category_id: e.target.value }))}
+                          className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                          required
+                        >
+                          <option value="">-- Choose --</option>
+                          {categories.map(c => (
+                            <option key={c.id} value={c.id}>{c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-zinc-500 mb-1">Image Upload / URL</label>
+                      <div className="flex space-x-2">
+                        <input 
+                          type="text"
+                          value={itemForm.image_url}
+                          onChange={(e) => setItemForm(prev => ({ ...prev, image_url: e.target.value }))}
+                          className="flex-1 px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-xs"
+                          placeholder="HTTP Image Link"
+                        />
+                        <label className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 cursor-pointer rounded-xl border border-zinc-700 text-zinc-300 flex items-center justify-center transition">
+                          <Upload size={14} className={uploading ? 'animate-spin' : ''} />
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden" 
+                            onChange={(e) => handleImageUpload(e, (url) => setItemForm(prev => ({ ...prev, image_url: url })))}
+                          />
+                        </label>
+                      </div>
+                      {itemForm.image_url && (
+                        <div className="mt-2 relative w-16 h-16 rounded border border-zinc-800 overflow-hidden bg-zinc-900">
+                          <img src={itemForm.image_url} className="w-full h-full object-cover" alt="" />
+                          <button type="button" onClick={() => setItemForm(prev => ({ ...prev, image_url: '' }))} className="absolute inset-0 bg-black/60 flex items-center justify-center text-white opacity-0 hover:opacity-100 transition-opacity">✕</button>
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-zinc-500 mb-1">Description</label>
+                      <textarea 
+                        value={itemForm.description}
+                        onChange={(e) => setItemForm(prev => ({ ...prev, description: e.target.value }))}
+                        rows="2"
+                        className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                        placeholder="Detailed dish description..."
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 pt-1">
+                      <div>
+                        <label className="block text-zinc-500 mb-1">Status</label>
+                        <select
+                          value={itemForm.status}
+                          onChange={(e) => setItemForm(prev => ({ ...prev, status: e.target.value }))}
+                          className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                        >
+                          <option value="visible">Visible</option>
+                          <option value="hidden">Hidden</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-zinc-500 mb-1">Display Order</label>
+                        <input 
+                          type="number"
+                          value={itemForm.display_order}
+                          onChange={(e) => setItemForm(prev => ({ ...prev, display_order: parseInt(e.target.value) || 0 }))}
+                          className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                          placeholder="0"
+                        />
+                      </div>
+                    </div>
+
+
+
+                    <div className="flex space-x-2 pt-2">
+                      <button 
+                        type="submit" 
+                        disabled={actionLoading}
+                        className="flex-1 py-2 bg-gold hover:bg-gold-light text-black text-xs font-bold rounded-lg transition"
+                      >
+                        {itemForm.isEdit ? 'Save Changes' : 'Create Dish'}
+                      </button>
+                      {itemForm.isEdit && (
+                        <button 
+                          type="button" 
+                          onClick={() => setItemForm({ name: '', price: '', category_id: '', description: '', image_url: '', status: 'visible', is_popular: false, display_order: 0, isEdit: false, id: null })}
+                          className="px-3 py-2 border border-zinc-800 hover:bg-zinc-900 text-zinc-400 text-xs font-semibold rounded-lg transition"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </form>
+                </div>
+
+                {/* Right List: Menu items list */}
+                <div className="glass-panel p-6 rounded-2xl lg:col-span-2 space-y-4">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-zinc-900 pb-3 gap-3">
+                    <h3 className="text-sm font-bold text-white font-serif tracking-wide">Menu Dishes List</h3>
+                    
+                    <div className="flex items-center space-x-2 text-xs">
+                      <div className="relative">
+                        <span className="absolute inset-y-0 left-3 flex items-center text-zinc-500"><Search size={12} /></span>
+                        <input
+                          type="text"
+                          value={menuSearch}
+                          onChange={(e) => setMenuSearch(e.target.value)}
+                          placeholder="Search..."
+                          className="pl-8 pr-3 py-1.5 bg-zinc-900/60 border border-zinc-800 rounded-lg text-white w-40 focus:outline-none focus:border-gold/50"
+                        />
+                      </div>
+                      
+                      <select
+                        value={menuFilterCat}
+                        onChange={(e) => setMenuFilterCat(e.target.value)}
+                        className="px-2 py-1.5 bg-zinc-900/60 border border-zinc-800 rounded-lg text-white focus:outline-none"
+                      >
+                        <option value="all">All Categories</option>
+                        {categories.map(c => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-zinc-900 text-zinc-500 font-semibold sticky top-0 bg-[#0c0d0f]">
+                          <th className="py-2.5">Dish</th>
+                          <th className="py-2.5">Category</th>
+                          <th className="py-2.5">Price</th>
+                          <th className="py-2.5">Order</th>
+                          <th className="py-2.5">Status</th>
+                          <th className="py-2.5 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {menuItems
+                          .filter(item => {
+                            const matchSearch = item.name.toLowerCase().includes(menuSearch.toLowerCase());
+                            const matchCat = menuFilterCat === 'all' || item.category_id === menuFilterCat;
+                            return matchSearch && matchCat;
+                          })
+                          .map(item => (
+                            <tr key={item.id} className="border-b border-zinc-900/40 hover:bg-zinc-900/10">
+                              <td className="py-3 flex items-center space-x-3">
+                                <div className="w-10 h-10 rounded overflow-hidden bg-zinc-900 border border-zinc-800 flex-shrink-0">
+                                  {item.image_url ? (
+                                    <img src={item.image_url} className="w-full h-full object-cover" alt="" />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-[10px] text-zinc-700">No Img</div>
+                                  )}
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-white flex items-center">
+                                    <span>{item.name}</span>
+
+                                  </p>
+                                  <p className="text-[10px] text-zinc-500 truncate max-w-xs">{item.description}</p>
+                                </div>
+                              </td>
+                              <td className="py-3 text-zinc-400 font-medium">{getCatName(item.category_id)}</td>
+                              <td className="py-3 font-semibold text-white">₹{parseFloat(item.price).toFixed(2)}</td>
+                              <td className="py-3 text-zinc-400">{item.display_order}</td>
+                              <td className="py-3">
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    const nextStatus = item.status === 'visible' ? 'hidden' : 'visible';
+                                    await api.updateMenuItem(item.id, { status: nextStatus });
+                                    triggerSuccess(`Status changed to ${nextStatus}`);
+                                  }}
+                                  className={`inline-flex items-center space-x-1 px-1.5 py-0.5 rounded text-[10px] font-bold border transition
+                                    ${item.status === 'visible' 
+                                      ? 'bg-green-500/5 border-green-500/20 text-green-400' 
+                                      : 'bg-zinc-500/5 border-zinc-500/20 text-zinc-500'
+                                    }
+                                  `}
+                                >
+                                  {item.status === 'visible' ? <Eye size={10} /> : <EyeOff size={10} />}
+                                  <span className="capitalize">{item.status}</span>
+                                </button>
+                              </td>
+                              <td className="py-3 text-right space-x-2">
+                                <button 
+                                  onClick={() => setItemForm({ ...item, isEdit: true, id: item.id })}
+                                  className="p-1 text-zinc-400 hover:text-gold transition"
+                                >
+                                  <Edit size={14} />
+                                </button>
+                                <button 
+                                  onClick={() => handleDeleteItem(item.id)}
+                                  className="p-1 text-zinc-400 hover:text-red-400 transition"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        {menuItems.length === 0 && (
+                          <tr>
+                            <td colSpan="6" className="py-8 text-center text-zinc-600">No dishes in menu yet.</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+          )}
+
+
+
+          {/* ============================================================== */}
+          {/* TAB: RESTAURANT INFORMATION */}
+          {/* ============================================================== */}
+          {activeTab === 'info' && (
+            <div className="max-w-3xl">
+              <div className="glass-panel p-6 rounded-2xl space-y-6">
+                <h3 className="text-base font-bold text-white font-serif tracking-wide border-b border-zinc-900 pb-3">Edit General Restaurant Details</h3>
+                <form onSubmit={handleInfoSubmit} className="space-y-4 text-xs">
+                  <div>
+                    <label className="block text-zinc-500 mb-1">Restaurant Name</label>
+                    <input 
+                      type="text"
+                      value={infoForm.name}
+                      onChange={(e) => setInfoForm(prev => ({ ...prev, name: e.target.value }))}
+                      className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-zinc-500 mb-1">Tagline</label>
+                    <input 
+                      type="text"
+                      value={infoForm.tagline}
+                      onChange={(e) => setInfoForm(prev => ({ ...prev, tagline: e.target.value }))}
+                      className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-zinc-500 mb-1">Description</label>
+                    <textarea 
+                      value={infoForm.description}
+                      onChange={(e) => setInfoForm(prev => ({ ...prev, description: e.target.value }))}
+                      rows="3"
+                      className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-zinc-500 mb-1">Weekday Opening Hours</label>
+                      <input 
+                        type="text"
+                        value={infoForm.opening_hours?.weekday}
+                        onChange={(e) => setInfoForm(prev => ({ 
+                          ...prev, 
+                          opening_hours: { ...prev.opening_hours, weekday: e.target.value } 
+                        }))}
+                        className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                        placeholder="e.g. 11:00 AM - 11:00 PM"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-zinc-500 mb-1">Weekend Opening Hours</label>
+                      <input 
+                        type="text"
+                        value={infoForm.opening_hours?.weekend}
+                        onChange={(e) => setInfoForm(prev => ({ 
+                          ...prev, 
+                          opening_hours: { ...prev.opening_hours, weekend: e.target.value } 
+                        }))}
+                        className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                        placeholder="e.g. 11:00 AM - 11:30 PM"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-zinc-500 mb-1">Delivery Radius</label>
+                      <input 
+                        type="text"
+                        value={infoForm.delivery_radius}
+                        onChange={(e) => setInfoForm(prev => ({ ...prev, delivery_radius: e.target.value }))}
+                        className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-zinc-500 mb-1">Location / Zone</label>
+                      <input 
+                        type="text"
+                        value={infoForm.location}
+                        onChange={(e) => setInfoForm(prev => ({ ...prev, location: e.target.value }))}
+                        className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-zinc-500 mb-1">Physical Address</label>
+                    <input 
+                      type="text"
+                      value={infoForm.address}
+                      onChange={(e) => setInfoForm(prev => ({ ...prev, address: e.target.value }))}
+                      className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-zinc-500 mb-1">Google Maps Direct Link</label>
+                    <input 
+                      type="text"
+                      value={infoForm.google_maps_link}
+                      onChange={(e) => setInfoForm(prev => ({ ...prev, google_maps_link: e.target.value }))}
+                      className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                    />
+                  </div>
+
+                  <div className="pt-2">
+                    <button 
+                      type="submit" 
+                      disabled={actionLoading}
+                      className="w-full md:w-fit px-8 py-3 bg-gold hover:bg-gold-light text-black text-xs font-bold rounded-xl transition flex items-center justify-center space-x-1 shadow-gold"
+                    >
+                      <Save size={14} />
+                      <span>Save Restaurant Details</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* TAB: CONTACT MANAGEMENT */}
+          {/* ============================================================== */}
+          {activeTab === 'contact' && (
+            <div className="max-w-3xl">
+              <div className="glass-panel p-6 rounded-2xl space-y-6">
+                <h3 className="text-base font-bold text-white font-serif tracking-wide border-b border-zinc-900 pb-3">Edit Contact Numbers & Links</h3>
+                <form onSubmit={handleContactSubmit} className="space-y-4 text-xs">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-zinc-500 mb-1">Primary Phone</label>
+                      <input 
+                        type="text"
+                        value={contactForm.primary_phone}
+                        onChange={(e) => setContactForm(prev => ({ ...prev, primary_phone: e.target.value }))}
+                        className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-zinc-500 mb-1">Secondary Phone</label>
+                      <input 
+                        type="text"
+                        value={contactForm.secondary_phone}
+                        onChange={(e) => setContactForm(prev => ({ ...prev, secondary_phone: e.target.value }))}
+                        className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-zinc-500 mb-1">WhatsApp Number *</label>
+                      <input 
+                        type="text"
+                        value={contactForm.whatsapp_number}
+                        onChange={(e) => setContactForm(prev => ({ ...prev, whatsapp_number: e.target.value }))}
+                        className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                        required
+                      />
+                      <span className="text-[10px] text-zinc-600 block mt-1">Number used for client orders. Input with country code, no symbols (e.g. 919676576392).</span>
+                    </div>
+                    <div>
+                      <label className="block text-zinc-500 mb-1">Email Address</label>
+                      <input 
+                        type="email"
+                        value={contactForm.email_address}
+                        onChange={(e) => setContactForm(prev => ({ ...prev, email_address: e.target.value }))}
+                        className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-zinc-500 mb-1">Instagram Link</label>
+                      <input 
+                        type="text"
+                        value={contactForm.instagram}
+                        onChange={(e) => setContactForm(prev => ({ ...prev, instagram: e.target.value }))}
+                        className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-zinc-500 mb-1">Facebook Link</label>
+                      <input 
+                        type="text"
+                        value={contactForm.facebook}
+                        onChange={(e) => setContactForm(prev => ({ ...prev, facebook: e.target.value }))}
+                        className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-zinc-500 mb-1">Google Maps Embed URL</label>
+                    <input 
+                      type="text"
+                      value={contactForm.google_maps_url}
+                      onChange={(e) => setContactForm(prev => ({ ...prev, google_maps_url: e.target.value }))}
+                      className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-zinc-500 mb-1">Address Details (for Contact page)</label>
+                    <textarea 
+                      value={contactForm.address}
+                      onChange={(e) => setContactForm(prev => ({ ...prev, address: e.target.value }))}
+                      rows="2"
+                      className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                    />
+                  </div>
+
+                  <div className="pt-2">
+                    <button 
+                      type="submit" 
+                      disabled={actionLoading}
+                      className="w-full md:w-fit px-8 py-3 bg-gold hover:bg-gold-light text-black text-xs font-bold rounded-xl transition flex items-center justify-center space-x-1 shadow-gold"
+                    >
+                      <Save size={14} />
+                      <span>Save Contact Information</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* TAB: GALLERY MANAGEMENT */}
+          {/* ============================================================== */}
+          {activeTab === 'gallery' && (
+            <div className="space-y-8">
+              
+              {/* Add New Gallery Image */}
+              <div className="glass-panel p-6 rounded-2xl space-y-4">
+                <h3 className="text-sm font-bold text-white font-serif tracking-wide border-b border-zinc-900 pb-3">Upload New Gallery Photo</h3>
+                <form onSubmit={handleGallerySubmit} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end text-xs">
+                  <div className="md:col-span-2">
+                    <label className="block text-zinc-500 mb-1">Photo Upload / URL</label>
+                    <div className="flex space-x-2">
+                      <input 
+                        type="text"
+                        value={galleryForm.image_url}
+                        onChange={(e) => setGalleryForm(prev => ({ ...prev, image_url: e.target.value }))}
+                        className="flex-1 px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-xs"
+                        placeholder="Image Link"
+                      />
+                      <label className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 cursor-pointer rounded-xl border border-zinc-700 text-zinc-300 flex items-center justify-center transition">
+                        <Upload size={14} />
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={(e) => handleImageUpload(e, (url) => setGalleryForm(prev => ({ ...prev, image_url: url })))}
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-zinc-500 mb-1">Photo Category</label>
+                    <select 
+                      value={galleryForm.category}
+                      onChange={(e) => setGalleryForm(prev => ({ ...prev, category: e.target.value }))}
+                      className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                    >
+                      <option value="Food">Food Photography</option>
+                      <option value="Ambience">Ambience & Decor</option>
+                      <option value="Family Dining">Family Dining</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <button 
+                      type="submit" 
+                      disabled={actionLoading}
+                      className="w-full py-2.5 bg-gold hover:bg-gold-light text-black text-xs font-bold rounded-lg transition"
+                    >
+                      Add to Gallery
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Gallery List (Grid of images) */}
+              <div className="glass-panel p-6 rounded-2xl space-y-4">
+                <h3 className="text-sm font-bold text-white font-serif tracking-wide border-b border-zinc-900 pb-3">Gallery Image Grid</h3>
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {gallery.map(img => (
+                    <div key={img.id} className="relative group rounded-xl overflow-hidden bg-zinc-950 border border-zinc-900/50 aspect-video">
+                      <img src={img.image_url} className="w-full h-full object-cover" alt="" />
+                      <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/60 text-gold text-[9px] font-semibold border border-gold/15 uppercase">
+                        {img.category}
+                      </div>
+                      <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <button 
+                          onClick={() => handleDeleteGallery(img.id)}
+                          className="p-3 bg-red-600 hover:bg-red-500 text-white rounded-full transition transform translate-y-2 group-hover:translate-y-0 duration-200 shadow-lg"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {gallery.length === 0 && (
+                    <div className="col-span-full py-12 text-center text-zinc-600">No images in gallery.</div>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* TAB: QR MENU MANAGEMENT */}
+          {/* ============================================================== */}
+          {activeTab === 'qr' && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
+              <div className="glass-panel p-6 rounded-2xl space-y-6">
+                <div>
+                  <h3 className="text-base font-bold text-white font-serif tracking-wide border-b border-zinc-900 pb-3">QR Menu Code</h3>
+                  <p className="text-zinc-500 text-xs mt-1">This module allows you to manage the destination link of the QR menu printed on tables. You can download and print the code for customer use.</p>
+                </div>
+
+                <form onSubmit={handleQrSubmit} className="space-y-4 text-xs">
+                  <div>
+                    <label className="block text-zinc-500 mb-1">QR Target URL</label>
+                    <input 
+                      type="text"
+                      value={qrForm.destination_url}
+                      onChange={(e) => setQrForm(prev => ({ ...prev, destination_url: e.target.value }))}
+                      className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                      placeholder="e.g. https://mythrirestaurant.com"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-zinc-500 mb-1">Custom QR Code Image URL (Optional)</label>
+                    <div className="flex space-x-2">
+                      <input 
+                        type="text"
+                        value={qrForm.qr_image_url || ''}
+                        onChange={(e) => setQrForm(prev => ({ ...prev, qr_image_url: e.target.value }))}
+                        className="flex-1 px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-xs"
+                        placeholder="Leave blank to auto-generate"
+                      />
+                      <label className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 cursor-pointer rounded-xl border border-zinc-700 text-zinc-300 flex items-center justify-center transition">
+                        <Upload size={14} />
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={(e) => handleImageUpload(e, (url) => setQrForm(prev => ({ ...prev, qr_image_url: url })))}
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <button 
+                      type="submit" 
+                      disabled={actionLoading}
+                      className="px-6 py-2.5 bg-gold hover:bg-gold-light text-black text-xs font-bold rounded-lg transition flex items-center space-x-1"
+                    >
+                      <Save size={14} />
+                      <span>Save QR Destination</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* QR Code Display & Preview */}
+              <div className="glass-panel p-6 rounded-2xl flex flex-col items-center justify-center space-y-4 text-center">
+                <h3 className="text-sm font-bold text-white font-serif tracking-wide border-b border-zinc-900 pb-3 w-full">QR Preview</h3>
+                
+                {/* Generate QR Code dynamically from Target URL */}
+                <div className="p-4 bg-white rounded-xl shadow-2xl inline-block border-4 border-gold/40">
+                  <img 
+                    src={qrForm.qr_image_url || `https://api.qrserver.com/v1/create-qr-code/?size=250x250&color=050505&data=${encodeURIComponent(qrForm.destination_url || 'https://mythri-restaurant.vercel.app')}`} 
+                    className="w-48 h-48 object-contain" 
+                    alt="Menu QR Code" 
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <p className="text-white text-sm font-semibold">Table Stand Menu QR Code</p>
+                  <p className="text-zinc-500 text-xs truncate max-w-xs">{qrForm.destination_url}</p>
+                </div>
+
+                <div className="flex space-x-2 pt-2">
+                  <a 
+                    href={qrForm.qr_image_url || `https://api.qrserver.com/v1/create-qr-code/?size=500x500&color=050505&data=${encodeURIComponent(qrForm.destination_url || 'https://mythri-restaurant.vercel.app')}`}
+                    target="_blank"
+                    download="mythri-menu-qr.png"
+                    className="px-4 py-2 bg-zinc-900 border border-zinc-800 hover:border-gold/30 text-gold rounded-lg transition text-xs flex items-center space-x-1.5 font-semibold"
+                  >
+                    <Download size={14} />
+                    <span>Download QR Print</span>
+                  </a>
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* TAB: HERO CUSTOMIZATION */}
+          {/* ============================================================== */}
+          {activeTab === 'hero' && (
+            <div className="max-w-3xl">
+              <div className="glass-panel p-6 rounded-2xl space-y-6">
+                <h3 className="text-base font-bold text-white font-serif tracking-wide border-b border-zinc-900 pb-3">Edit Main Hero Banner details</h3>
+                <form onSubmit={handleHeroSubmit} className="space-y-4 text-xs">
+                  <div>
+                    <label className="block text-zinc-500 mb-1">Main Heading</label>
+                    <input 
+                      type="text"
+                      value={heroForm.heading}
+                      onChange={(e) => setHeroForm(prev => ({ ...prev, heading: e.target.value }))}
+                      className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-zinc-500 mb-1">Subheading</label>
+                    <input 
+                      type="text"
+                      value={heroForm.subheading}
+                      onChange={(e) => setHeroForm(prev => ({ ...prev, subheading: e.target.value }))}
+                      className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-zinc-500 mb-1">Description Paragraph</label>
+                    <textarea 
+                      value={heroForm.description}
+                      onChange={(e) => setHeroForm(prev => ({ ...prev, description: e.target.value }))}
+                      rows="3"
+                      className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-zinc-500 mb-1">Background Image URL</label>
+                    <div className="flex space-x-2">
+                      <input 
+                        type="text"
+                        value={heroForm.background_image_url}
+                        onChange={(e) => setHeroForm(prev => ({ ...prev, background_image_url: e.target.value }))}
+                        className="flex-1 px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-xs"
+                        placeholder="Image Link"
+                      />
+                      <label className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 cursor-pointer rounded-xl border border-zinc-700 text-zinc-300 flex items-center justify-center transition">
+                        <Upload size={14} />
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={(e) => handleImageUpload(e, (url) => setHeroForm(prev => ({ ...prev, background_image_url: url })))}
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <button 
+                      type="submit" 
+                      disabled={actionLoading}
+                      className="w-full md:w-fit px-8 py-3 bg-gold hover:bg-gold-light text-black text-xs font-bold rounded-xl transition flex items-center justify-center space-x-1 shadow-gold"
+                    >
+                      <Save size={14} />
+                      <span>Save Hero Section Settings</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* TAB: CUSTOMER REVIEWS */}
+          {/* ============================================================== */}
+          {activeTab === 'reviews' && (
+            <div className="space-y-8">
+              
+              <div className="glass-panel p-6 rounded-2xl space-y-4">
+                <h3 className="text-sm font-bold text-white font-serif tracking-wide border-b border-zinc-900 pb-3">
+                  {reviewForm.isEdit ? 'Edit Customer Review' : 'Add New Customer Review'}
+                </h3>
+                
+                <form onSubmit={handleReviewSubmit} className="space-y-4 text-xs">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-zinc-500 mb-1">Customer Name *</label>
+                      <input 
+                        type="text"
+                        value={reviewForm.customer_name}
+                        onChange={(e) => setReviewForm(prev => ({ ...prev, customer_name: e.target.value }))}
+                        className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                        placeholder="Rajesh K."
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-zinc-500 mb-1">Rating *</label>
+                      <select 
+                        value={reviewForm.rating}
+                        onChange={(e) => setReviewForm(prev => ({ ...prev, rating: parseInt(e.target.value) || 5 }))}
+                        className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                      >
+                        <option value="5">⭐⭐⭐⭐⭐ (5 Stars)</option>
+                        <option value="4">⭐⭐⭐⭐ (4 Stars)</option>
+                        <option value="3">⭐⭐⭐ (3 Stars)</option>
+                        <option value="2">⭐⭐ (2 Stars)</option>
+                        <option value="1">⭐ (1 Star)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-zinc-500 mb-1">Customer Photo URL</label>
+                      <div className="flex space-x-2">
+                        <input 
+                          type="text"
+                          value={reviewForm.photo_url}
+                          onChange={(e) => setReviewForm(prev => ({ ...prev, photo_url: e.target.value }))}
+                          className="flex-1 px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-xs"
+                          placeholder="Image Link"
+                        />
+                        <label className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 cursor-pointer rounded-xl border border-zinc-700 text-zinc-300 flex items-center justify-center transition">
+                          <Upload size={14} />
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden" 
+                            onChange={(e) => handleImageUpload(e, (url) => setReviewForm(prev => ({ ...prev, photo_url: url })))}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-zinc-500 mb-1">Review Feedback Content *</label>
+                    <textarea 
+                      value={reviewForm.review_text}
+                      onChange={(e) => setReviewForm(prev => ({ ...prev, review_text: e.target.value }))}
+                      rows="3"
+                      className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                      placeholder="Write review feedback here..."
+                      required
+                    />
+                  </div>
+
+                  <div className="flex space-x-2 pt-2">
+                    <button 
+                      type="submit" 
+                      disabled={actionLoading}
+                      className="px-6 py-2.5 bg-gold hover:bg-gold-light text-black text-xs font-bold rounded-lg transition"
+                    >
+                      {reviewForm.isEdit ? 'Save Changes' : 'Publish Review'}
+                    </button>
+                    {reviewForm.isEdit && (
+                      <button 
+                        type="button" 
+                        onClick={() => setReviewForm({ customer_name: '', review_text: '', rating: 5, photo_url: '', status: 'visible', isEdit: false, id: null })}
+                        className="px-3 py-2 border border-zinc-800 hover:bg-zinc-900 text-zinc-400 text-xs font-semibold rounded-lg transition"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                  </div>
+                </form>
+              </div>
+
+              {/* Review list */}
+              <div className="glass-panel p-6 rounded-2xl space-y-4">
+                <h3 className="text-sm font-bold text-white font-serif tracking-wide border-b border-zinc-900 pb-3">Manage Customer Feedback</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {reviews.map(r => (
+                    <div key={r.id} className="p-4 rounded-xl border border-zinc-900 bg-zinc-900/20 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <img src={r.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'} className="w-8 h-8 rounded-full object-cover" alt="" />
+                            <div>
+                              <p className="font-semibold text-white text-xs">{r.customer_name}</p>
+                              <p className="text-[10px] text-zinc-500">{new Date(r.created_at).toLocaleDateString()}</p>
+                            </div>
+                          </div>
+                          <div className="text-[10px] text-gold font-bold">
+                            {'★'.repeat(r.rating)}
+                          </div>
+                        </div>
+                        <p className="text-zinc-400 text-xs mt-3 leading-relaxed font-light">{r.review_text}</p>
+                      </div>
+
+                      <div className="flex items-center justify-end space-x-2 pt-4 mt-3 border-t border-zinc-900/50">
+                        <button
+                          onClick={async () => {
+                            const nextStatus = r.status === 'visible' ? 'hidden' : 'visible';
+                            await api.updateReview(r.id, { status: nextStatus });
+                            triggerSuccess(`Review state changed to ${nextStatus}`);
+                          }}
+                          className={`text-[10px] px-2 py-0.5 rounded border font-semibold
+                            ${r.status === 'visible' 
+                              ? 'bg-green-500/5 border-green-500/10 text-green-400' 
+                              : 'bg-zinc-500/5 border-zinc-500/10 text-zinc-500'
+                            }
+                          `}
+                        >
+                          {r.status}
+                        </button>
+                        <button 
+                          onClick={() => setReviewForm({ ...r, isEdit: true, id: r.id })}
+                          className="p-1 text-zinc-400 hover:text-gold transition"
+                        >
+                          <Edit size={12} />
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteReview(r.id)}
+                          className="p-1 text-zinc-400 hover:text-red-400 transition"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* TAB: ORDER HISTORY */}
+          {/* ============================================================== */}
+          {activeTab === 'orders' && (
+            <div className="space-y-6">
+              
+              <div className="glass-panel p-6 rounded-2xl space-y-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-zinc-900 pb-3 gap-3">
+                  <h3 className="text-sm font-bold text-white font-serif tracking-wide">Customer Orders Log</h3>
+                  
+                  <div className="flex items-center space-x-2 text-xs">
+                    <div className="relative">
+                      <span className="absolute inset-y-0 left-3 flex items-center text-zinc-500"><Search size={12} /></span>
+                      <input
+                        type="text"
+                        value={orderSearch}
+                        onChange={(e) => setOrderSearch(e.target.value)}
+                        placeholder="Search Name/Phone/ID..."
+                        className="pl-8 pr-3 py-1.5 bg-zinc-900/60 border border-zinc-800 rounded-lg text-white w-44 focus:outline-none focus:border-gold/50"
+                      />
+                    </div>
+                    
+                    <select
+                      value={orderFilter}
+                      onChange={(e) => setOrderFilter(e.target.value)}
+                      className="px-2 py-1.5 bg-zinc-900/60 border border-zinc-800 rounded-lg text-white focus:outline-none"
+                    >
+                      <option value="All">All Statuses</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Pending">Pending</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b border-zinc-900 text-zinc-500 font-semibold sticky top-0 bg-[#0c0d0f]">
+                        <th className="py-2.5">Order ID</th>
+                        <th className="py-2.5">Customer Details</th>
+                        <th className="py-2.5">Items Ordered</th>
+                        <th className="py-2.5">Final Total</th>
+                        <th className="py-2.5">Payment</th>
+                        <th className="py-2.5">Order Status</th>
+                        <th className="py-2.5 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {orders
+                        .filter(o => {
+                          const matchSearch = o.customer_name.toLowerCase().includes(orderSearch.toLowerCase()) || 
+                                              o.customer_phone.includes(orderSearch) ||
+                                              o.id.toLowerCase().includes(orderSearch.toLowerCase());
+                          const matchFilter = orderFilter === 'All' || o.order_status === orderFilter;
+                          return matchSearch && matchFilter;
+                        })
+                        .map(o => (
+                          <tr key={o.id} className="border-b border-zinc-900/40 hover:bg-zinc-900/10">
+                            <td className="py-3 font-mono font-bold text-white">{o.id}</td>
+                            <td className="py-3">
+                              <p className="font-semibold text-white">{o.customer_name}</p>
+                              <p className="text-[10px] text-zinc-400 font-mono mt-0.5">{o.customer_phone}</p>
+                              {o.is_first_order && (
+                                <span className="inline-block mt-1 px-1.5 py-0.5 bg-gold/10 border border-gold/15 text-gold text-[8px] font-bold rounded uppercase">
+                                  First Order
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3 max-w-[200px]">
+                              <div className="space-y-0.5 text-[10px] text-zinc-400">
+                                {o.items?.map((item, idx) => (
+                                  <div key={idx} className="truncate">
+                                    {item.name} x{item.quantity}
+                                  </div>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="py-3">
+                              <span className="font-mono font-bold text-white">₹{o.final_amount.toFixed(2)}</span>
+                              {o.discount_amount > 0 && (
+                                <p className="text-[10px] text-gold font-mono mt-0.5">Discount: -₹{o.discount_amount.toFixed(2)}</p>
+                              )}
+                            </td>
+                            <td className="py-3">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                o.payment_status === 'Paid'
+                                  ? 'bg-green-500/10 border-green-500/20 text-green-400'
+                                  : o.payment_status === 'Pending'
+                                    ? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+                                    : 'bg-red-500/10 border-red-500/20 text-red-400'
+                              }`}>
+                                {o.payment_status}
+                              </span>
+                            </td>
+                            <td className="py-3">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                o.order_status === 'Completed'
+                                  ? 'bg-green-500/10 border-green-500/20 text-green-400'
+                                  : o.order_status === 'Pending'
+                                    ? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+                                    : 'bg-red-500/10 border-red-500/20 text-red-400'
+                              }`}>
+                                {o.order_status}
+                              </span>
+                            </td>
+                            <td className="py-3 text-right">
+                              <div className="flex items-center justify-end space-x-1.5">
+                                <select 
+                                  value={o.order_status} 
+                                  onChange={(e) => handleUpdateOrderStatus(o.id, e.target.value)}
+                                  className="bg-zinc-900 border border-zinc-800 rounded px-1.5 py-1 text-[10px] text-white focus:outline-none"
+                                >
+                                  <option value="Pending">Pending</option>
+                                  <option value="Completed">Completed</option>
+                                  <option value="Cancelled">Cancelled</option>
+                                </select>
+                                
+                                <select 
+                                  value={o.payment_status} 
+                                  onChange={(e) => handleUpdatePaymentStatus(o.id, e.target.value)}
+                                  className="bg-zinc-900 border border-zinc-800 rounded px-1.5 py-1 text-[10px] text-white focus:outline-none"
+                                >
+                                  <option value="Pending">Pending</option>
+                                  <option value="Paid">Paid</option>
+                                  <option value="Failed">Failed</option>
+                                </select>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      {orders.length === 0 && (
+                        <tr>
+                          <td colSpan="7" className="py-6 text-center text-zinc-600">No orders logged.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* TAB: CUSTOMER DISCOUNTS */}
+          {/* ============================================================== */}
+          {activeTab === 'discounts' && (
+            <div className="space-y-6">
+              
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div className="bg-zinc-900/40 border border-zinc-900 p-4 rounded-xl">
+                  <span className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Total Assigned</span>
+                  <span className="text-xl font-bold text-white font-mono mt-1 block">{totalDiscounts}</span>
+                </div>
+                <div className="bg-zinc-900/40 border border-zinc-900 p-4 rounded-xl">
+                  <span className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Active</span>
+                  <span className="text-xl font-bold text-green-400 font-mono mt-1 block">{activeDiscounts}</span>
+                </div>
+                <div className="bg-zinc-900/40 border border-zinc-900 p-4 rounded-xl">
+                  <span className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Used</span>
+                  <span className="text-xl font-bold text-gold font-mono mt-1 block">{usedDiscounts}</span>
+                </div>
+                <div className="bg-zinc-900/40 border border-zinc-900 p-4 rounded-xl">
+                  <span className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Expired</span>
+                  <span className="text-xl font-bold text-red-400 font-mono mt-1 block">{expiredDiscounts}</span>
+                </div>
+                <div className="bg-zinc-900/40 border border-zinc-900 p-4 rounded-xl col-span-2 md:col-span-1">
+                  <span className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Value Saved</span>
+                  <span className="text-xl font-bold text-gold font-mono mt-1 block">₹{totalDiscountValueGiven.toFixed(2)}</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <div className="glass-panel p-6 rounded-2xl h-fit space-y-4">
+                  <h3 className="text-sm font-bold text-white font-serif tracking-wide border-b border-zinc-900 pb-3">
+                    {assignForm.isEdit ? 'Edit Customer Discount' : 'Assign First-Time Discount'}
+                  </h3>
+                  <form onSubmit={handleDiscountSubmit} className="space-y-4 text-xs">
+                    <div>
+                      <label className="block text-zinc-500 mb-1">Customer Name</label>
+                      <input 
+                        type="text"
+                        value={assignForm.notes.startsWith('For: ') ? assignForm.notes.substring(5).split(' |')[0] : ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const restNotes = assignForm.notes.includes('|') ? assignForm.notes.split('|')[1] : '';
+                          setAssignForm(prev => ({ 
+                            ...prev, 
+                            notes: `For: ${val}${restNotes ? ` |${restNotes}` : ''}` 
+                          }));
+                        }}
+                        placeholder="e.g. Ramesh Kumar"
+                        className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-zinc-500 mb-1">Phone Number (Unique) *</label>
+                      <input 
+                        type="tel"
+                        value={assignForm.customer_phone}
+                        onChange={(e) => setAssignForm(prev => ({ ...prev, customer_phone: e.target.value }))}
+                        placeholder="e.g. 9876543210"
+                        className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm font-mono"
+                        required
+                        disabled={assignForm.isEdit}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-zinc-500 mb-1">Discount Type</label>
+                        <select 
+                          value={assignForm.discount_type}
+                          onChange={(e) => setAssignForm(prev => ({ ...prev, discount_type: e.target.value }))}
+                          className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                        >
+                          <option value="percentage">Percentage (%)</option>
+                          <option value="fixed">Fixed Amount (₹)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-zinc-500 mb-1">Discount Value *</label>
+                        <input 
+                          type="number"
+                          value={assignForm.discount_value}
+                          onChange={(e) => setAssignForm(prev => ({ ...prev, discount_value: e.target.value }))}
+                          placeholder="e.g. 15 or 100"
+                          className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm font-mono"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-zinc-500 mb-1">Min Order Amount (₹)</label>
+                        <input 
+                          type="number"
+                          value={assignForm.minimum_order_amount}
+                          onChange={(e) => setAssignForm(prev => ({ ...prev, minimum_order_amount: e.target.value }))}
+                          placeholder="0"
+                          className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-zinc-500 mb-1">Max Discount (₹)</label>
+                        <input 
+                          type="number"
+                          value={assignForm.maximum_discount || ''}
+                          onChange={(e) => setAssignForm(prev => ({ ...prev, maximum_discount: e.target.value }))}
+                          placeholder="No Limit"
+                          className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm font-mono"
+                          disabled={assignForm.discount_type === 'fixed'}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-zinc-500 mb-1">Expiry Date</label>
+                      <input 
+                        type="date"
+                        value={assignForm.expiry_date ? assignForm.expiry_date.split('T')[0] : ''}
+                        onChange={(e) => setAssignForm(prev => ({ ...prev, expiry_date: e.target.value }))}
+                        className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm font-mono"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-zinc-500 mb-1">Status</label>
+                      <select 
+                        value={assignForm.status}
+                        onChange={(e) => setAssignForm(prev => ({ ...prev, status: e.target.value }))}
+                        className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                      >
+                        <option value="Active">Active</option>
+                        <option value="Used" disabled>Used</option>
+                        <option value="Expired">Expired</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-zinc-500 mb-1">Internal Notes</label>
+                      <textarea 
+                        value={assignForm.notes.includes('|') ? assignForm.notes.split('|')[1] : ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const namePart = assignForm.notes.startsWith('For: ') ? assignForm.notes.split('|')[0] : '';
+                          setAssignForm(prev => ({ 
+                            ...prev, 
+                            notes: `${namePart || 'For: '} |${val}` 
+                          }));
+                        }}
+                        placeholder="Internal notes..."
+                        className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                        rows="2"
+                      />
+                    </div>
+
+                    <div className="flex space-x-2 pt-2">
+                      <button 
+                        type="submit" 
+                        disabled={actionLoading}
+                        className="flex-1 py-2 bg-gold hover:bg-gold-light text-black text-xs font-bold rounded-lg transition"
+                      >
+                        {assignForm.isEdit ? 'Save Changes' : 'Assign Discount'}
+                      </button>
+                      {assignForm.isEdit && (
+                        <button 
+                          type="button" 
+                          onClick={() => setAssignForm({
+                            customer_phone: '',
+                            discount_type: 'percentage',
+                            discount_value: '',
+                            minimum_order_amount: '',
+                            maximum_discount: '',
+                            expiry_date: '',
+                            notes: '',
+                            status: 'Active',
+                            isEdit: false,
+                            id: null
+                          })}
+                          className="px-3 py-2 border border-zinc-800 hover:bg-zinc-900 text-zinc-400 text-xs font-semibold rounded-lg transition"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </form>
+                </div>
+
+                <div className="glass-panel p-6 rounded-2xl lg:col-span-2 space-y-4">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-zinc-900 pb-3 gap-3">
+                    <h3 className="text-sm font-bold text-white font-serif tracking-wide">Assigned Discounts</h3>
+                    
+                    <div className="flex items-center space-x-2 text-xs">
+                      <div className="relative">
+                        <span className="absolute inset-y-0 left-3 flex items-center text-zinc-500"><Search size={12} /></span>
+                        <input
+                          type="text"
+                          value={discountSearch}
+                          onChange={(e) => setDiscountSearch(e.target.value)}
+                          placeholder="Search Phone/Name..."
+                          className="pl-8 pr-3 py-1.5 bg-zinc-900/60 border border-zinc-800 rounded-lg text-white w-40 focus:outline-none focus:border-gold/50"
+                        />
+                      </div>
+                      
+                      <select
+                        value={discountFilter}
+                        onChange={(e) => setDiscountFilter(e.target.value)}
+                        className="px-2 py-1.5 bg-zinc-900/60 border border-zinc-800 rounded-lg text-white focus:outline-none"
+                      >
+                        <option value="All">All Status</option>
+                        <option value="Active">Active</option>
+                        <option value="Used">Used</option>
+                        <option value="Expired">Expired</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-zinc-900 text-zinc-500 font-semibold sticky top-0 bg-[#0c0d0f]">
+                          <th className="py-2.5">Customer Name</th>
+                          <th className="py-2.5">Phone Number</th>
+                          <th className="py-2.5">Discount Value</th>
+                          <th className="py-2.5">Min Order</th>
+                          <th className="py-2.5">Status</th>
+                          <th className="py-2.5 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {discounts
+                          .filter(d => {
+                            const name = getCustomerNameByPhone(d.customer_phone).toLowerCase();
+                            const matchSearch = d.customer_phone.includes(discountSearch) || name.includes(discountSearch.toLowerCase());
+                            const matchFilter = discountFilter === 'All' || d.status === discountFilter;
+                            return matchSearch && matchFilter;
+                          })
+                          .map(d => (
+                            <tr key={d.id} className="border-b border-zinc-900/40 hover:bg-zinc-900/10">
+                              <td className="py-3 font-semibold text-white">{getCustomerNameByPhone(d.customer_phone)}</td>
+                              <td className="py-3 text-zinc-400 font-mono">{d.customer_phone}</td>
+                              <td className="py-3 text-white font-mono font-bold">
+                                {d.discount_type === 'percentage' ? `${d.discount_value}%` : `₹${d.discount_value}`}
+                              </td>
+                              <td className="py-3 text-zinc-400 font-mono">₹{d.minimum_order_amount}</td>
+                              <td className="py-3">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                                  d.status === 'Active' 
+                                    ? 'bg-green-500/10 border-green-500/20 text-green-400' 
+                                    : d.status === 'Used' 
+                                      ? 'bg-gold/10 border-gold/25 text-gold' 
+                                      : 'bg-red-500/10 border-red-500/20 text-red-400'
+                                }`}>
+                                  {d.status}
+                                </span>
+                              </td>
+                              <td className="py-3 text-right space-x-2">
+                                <button 
+                                  onClick={() => setAssignForm({
+                                    ...d,
+                                    isEdit: true,
+                                    id: d.id
+                                  })}
+                                  disabled={d.status === 'Used'}
+                                  className="p-1 text-zinc-400 hover:text-gold transition disabled:text-zinc-700"
+                                  title="Edit"
+                                >
+                                  <Edit size={14} />
+                                </button>
+                                <button 
+                                  onClick={() => handleDeleteDiscount(d.id)}
+                                  className="p-1 text-zinc-400 hover:text-red-400 transition"
+                                  title="Delete"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        {discounts.length === 0 && (
+                          <tr>
+                            <td colSpan="6" className="py-6 text-center text-zinc-600">No discounts assigned.</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* TAB: WEBSITE GLOBAL SETTINGS */}
+          {/* ============================================================== */}
+          {activeTab === 'settings' && (
+            <div className="max-w-md">
+              <div className="glass-panel p-6 rounded-2xl space-y-6">
+                <h3 className="text-base font-bold text-white font-serif tracking-wide border-b border-zinc-900 pb-3">Global Website System Settings</h3>
+                
+                <form onSubmit={handleSettingsSubmit} className="space-y-4 text-xs">
+                  <div>
+                    <label className="block text-zinc-500 mb-1">Website Operational Status</label>
+                    <select
+                      value={settingsForm.status}
+                      onChange={(e) => setSettingsForm(prev => ({ ...prev, status: e.target.value }))}
+                      className="w-full px-3 py-2.5 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                    >
+                      <option value="online">Online & Active (Fully visible)</option>
+                      <option value="maintenance">Maintenance Mode (Show splash banner)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-zinc-500 mb-1">Default UI Palette / Theme</label>
+                    <select
+                      value={settingsForm.theme}
+                      onChange={(e) => setSettingsForm(prev => ({ ...prev, theme: e.target.value }))}
+                      className="w-full px-3 py-2.5 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                      disabled
+                    >
+                      <option value="dark">Luxury Black Gold (Dark Theme)</option>
+                    </select>
+                    <span className="text-[10px] text-zinc-600 mt-1 block">Luxury Dark Theme is set by default per your specification.</span>
+                  </div>
+
+                  <div className="pt-2">
+                    <button 
+                      type="submit" 
+                      disabled={actionLoading}
+                      className="w-full py-2.5 bg-gold hover:bg-gold-light text-black text-xs font-bold rounded-lg transition flex items-center justify-center space-x-1"
+                    >
+                      <Save size={14} />
+                      <span>Save Operational Settings</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+        </main>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,2318 @@
+{
+  "website_settings": {
+    "status": "online",
+    "theme": "dark"
+  },
+  "restaurant_settings": {
+    "name": "MYTHRI \u2013 THE COMPLETE FAMILY RESTAURANT",
+    "tagline": "Taste The Freshness In Every Bite",
+    "description": "Welcome to Mythri Restaurant, where we serve the finest, fresh family meals. Taste the authenticity in every single bite.",
+    "opening_hours": {
+      "weekday": "11:00 AM - 11:00 PM",
+      "weekend": "11:00 AM - 11:30 PM"
+    },
+    "delivery_radius": "Within 5 km",
+    "location": "Hyderabad, Telangana",
+    "address": "Main Road, Near Metro Station, Hyderabad",
+    "google_maps_link": "https://maps.app.goo.gl/81f9WrWjXGkT2Mth8",
+    "social_media_links": {
+      "facebook": "https://facebook.com/mythri_restaurant",
+      "instagram": "https://instagram.com/mythri_restaurant",
+      "twitter": "#"
+    }
+  },
+  "contact_information": {
+    "primary_phone": "9676576392",
+    "secondary_phone": "9637657639",
+    "whatsapp_number": "9676576392",
+    "email_address": "contact@mythrirestaurant.com",
+    "instagram": "https://instagram.com/mythri_restaurant",
+    "facebook": "https://facebook.com/mythri_restaurant",
+    "google_maps_url": "https://maps.app.goo.gl/81f9WrWjXGkT2Mth8",
+    "address": "Main Road, Near Metro Station, Hyderabad"
+  },
+  "hero_section": {
+    "heading": "Mythri Family Restaurant",
+    "subheading": "Savor The Authentic Taste",
+    "description": "Experience the best multi-cuisine family dining with fresh ingredients, traditional spices, and exceptional service.",
+    "background_image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1920&q=80",
+    "cta_buttons": [
+      {
+        "text": "Order on WhatsApp",
+        "action": "whatsapp",
+        "primary": true
+      },
+      {
+        "text": "View Menu",
+        "action": "menu",
+        "primary": false
+      }
+    ],
+    "badges": [
+      "100% Fresh Ingredients",
+      "Best Multi-Cuisine",
+      "Family Dining Room"
+    ]
+  },
+  "qr_codes": {
+    "qr_image_url": null,
+    "destination_url": "https://maps.app.goo.gl/81f9WrWjXGkT2Mth8"
+  },
+  "admins": [
+    {
+      "username": "admin",
+      "password": "admin123",
+      "email": "admin@mythri.com",
+      "name": "Mythri Manager"
+    }
+  ],
+  "menu_categories": [
+    {
+      "id": "c_1",
+      "name": "Soups",
+      "display_order": 1
+    },
+    {
+      "id": "c_2",
+      "name": "Veg Starters",
+      "display_order": 2
+    },
+    {
+      "id": "c_3",
+      "name": "Non-Veg Starters",
+      "display_order": 3
+    },
+    {
+      "id": "c_4",
+      "name": "Non-Veg Curries",
+      "display_order": 4
+    },
+    {
+      "id": "c_5",
+      "name": "Veg Curries",
+      "display_order": 5
+    },
+    {
+      "id": "c_6",
+      "name": "Veg Biryanis",
+      "display_order": 6
+    },
+    {
+      "id": "c_7",
+      "name": "Non-Veg Biryanis",
+      "display_order": 7
+    },
+    {
+      "id": "c_8",
+      "name": "Rotis & Naans",
+      "display_order": 8
+    },
+    {
+      "id": "c_9",
+      "name": "Tandoori & Kebabs",
+      "display_order": 9
+    },
+    {
+      "id": "c_10",
+      "name": "Mandi & Family Packs",
+      "display_order": 10
+    },
+    {
+      "id": "c_11",
+      "name": "Fried Rice",
+      "display_order": 11
+    },
+    {
+      "id": "c_12",
+      "name": "Mythri Specials",
+      "display_order": 12
+    },
+    {
+      "id": "c_13",
+      "name": "Meals",
+      "display_order": 13
+    },
+    {
+      "id": "c_14",
+      "name": "Beverages",
+      "display_order": 14
+    }
+  ],
+  "menu_items": [
+    {
+      "id": "m_1",
+      "name": "Tomato Soup",
+      "price": 100.0,
+      "category_id": "c_1",
+      "description": "Warm, comforting soup freshly prepared with slow-simmered broth, garden herbs, and succulent Tomato.",
+      "image_url": "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 1
+    },
+    {
+      "id": "m_2",
+      "name": "Veg Corn Soup",
+      "price": 100.0,
+      "category_id": "c_1",
+      "description": "Warm, comforting soup freshly prepared with slow-simmered broth, garden herbs, and succulent Veg Corn.",
+      "image_url": "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 2
+    },
+    {
+      "id": "m_3",
+      "name": "Veg Manchow Soup",
+      "price": 100.0,
+      "category_id": "c_1",
+      "description": "Warm, comforting soup freshly prepared with slow-simmered broth, garden herbs, and succulent Veg Manchow.",
+      "image_url": "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 3
+    },
+    {
+      "id": "m_4",
+      "name": "Mushroom Soup",
+      "price": 100.0,
+      "category_id": "c_1",
+      "description": "Warm, comforting soup freshly prepared with slow-simmered broth, garden herbs, and succulent Mushroom.",
+      "image_url": "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 4
+    },
+    {
+      "id": "m_5",
+      "name": "Veg Hot & Sour Soup",
+      "price": 100.0,
+      "category_id": "c_1",
+      "description": "Warm, comforting soup freshly prepared with slow-simmered broth, garden herbs, and succulent Veg Hot & Sour.",
+      "image_url": "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 5
+    },
+    {
+      "id": "m_6",
+      "name": "Chicken Corn Soup",
+      "price": 120.0,
+      "category_id": "c_1",
+      "description": "Warm, comforting soup freshly prepared with slow-simmered broth, garden herbs, and succulent Chicken Corn.",
+      "image_url": "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 6
+    },
+    {
+      "id": "m_7",
+      "name": "Chicken Hot & Sour Soup",
+      "price": 120.0,
+      "category_id": "c_1",
+      "description": "Warm, comforting soup freshly prepared with slow-simmered broth, garden herbs, and succulent Chicken Hot & Sour.",
+      "image_url": "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 7
+    },
+    {
+      "id": "m_8",
+      "name": "Chicken Manchow Soup",
+      "price": 120.0,
+      "category_id": "c_1",
+      "description": "Warm, comforting soup freshly prepared with slow-simmered broth, garden herbs, and succulent Chicken Manchow.",
+      "image_url": "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 8
+    },
+    {
+      "id": "m_9",
+      "name": "Crispy Corn",
+      "price": 200.0,
+      "category_id": "c_2",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Crispy Corn seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 1
+    },
+    {
+      "id": "m_10",
+      "name": "Crispy Veg",
+      "price": 180.0,
+      "category_id": "c_2",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Crispy Veg seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 2
+    },
+    {
+      "id": "m_11",
+      "name": "Dragon Veg",
+      "price": 220.0,
+      "category_id": "c_2",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Dragon Veg seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 3
+    },
+    {
+      "id": "m_12",
+      "name": "Paneer 65",
+      "price": 240.0,
+      "category_id": "c_2",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Paneer seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 4
+    },
+    {
+      "id": "m_13",
+      "name": "Chilli Paneer",
+      "price": 260.0,
+      "category_id": "c_2",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Paneer seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 5
+    },
+    {
+      "id": "m_14",
+      "name": "Paneer Manchuria",
+      "price": 260.0,
+      "category_id": "c_2",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Paneer seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 6
+    },
+    {
+      "id": "m_15",
+      "name": "Malai Paneer",
+      "price": 300.0,
+      "category_id": "c_2",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Malai Paneer seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 7
+    },
+    {
+      "id": "m_16",
+      "name": "Malai Kofta",
+      "price": 290.0,
+      "category_id": "c_2",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Malai Kofta seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 8
+    },
+    {
+      "id": "m_17",
+      "name": "Mushroom Manchuria",
+      "price": 260.0,
+      "category_id": "c_2",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Mushroom seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 9
+    },
+    {
+      "id": "m_18",
+      "name": "Mushroom 65",
+      "price": 260.0,
+      "category_id": "c_2",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Mushroom seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 10
+    },
+    {
+      "id": "m_19",
+      "name": "Chilli Mushroom",
+      "price": 260.0,
+      "category_id": "c_2",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Mushroom seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 11
+    },
+    {
+      "id": "m_20",
+      "name": "Mushroom Fry",
+      "price": 270.0,
+      "category_id": "c_2",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Mushroom Fry seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 12
+    },
+    {
+      "id": "m_21",
+      "name": "Kaju Fry",
+      "price": 280.0,
+      "category_id": "c_2",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Kaju Fry seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 13
+    },
+    {
+      "id": "m_22",
+      "name": "Paneer Majestic",
+      "price": 250.0,
+      "category_id": "c_2",
+      "description": "Fresh paneer strips stir-fried in a spicy yogurt sauce with curry leaves and green chillies.",
+      "image_url": "https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": true,
+      "display_order": 14
+    },
+    {
+      "id": "m_23",
+      "name": "Baby Corn Manchuria",
+      "price": 220.0,
+      "category_id": "c_2",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Baby Corn seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 15
+    },
+    {
+      "id": "m_24",
+      "name": "Pepper Mushroom",
+      "price": 260.0,
+      "category_id": "c_2",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Pepper Mushroom seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 16
+    },
+    {
+      "id": "m_25",
+      "name": "Baby Corn 65",
+      "price": 240.0,
+      "category_id": "c_2",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Baby Corn seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 17
+    },
+    {
+      "id": "m_26",
+      "name": "Chilli Baby Corn",
+      "price": 260.0,
+      "category_id": "c_2",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Baby Corn seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 18
+    },
+    {
+      "id": "m_27",
+      "name": "Double Egg Masala Omelette",
+      "price": 100.0,
+      "category_id": "c_2",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Double Egg Masala Omelette seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 19
+    },
+    {
+      "id": "m_28",
+      "name": "Single Egg Masala Omelette",
+      "price": 60.0,
+      "category_id": "c_2",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Single Egg Masala Omelette seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 20
+    },
+    {
+      "id": "m_29",
+      "name": "Chicken Wings Dry",
+      "price": 270.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Chicken Wings Dry seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 1
+    },
+    {
+      "id": "m_30",
+      "name": "Chicken Wings Wet",
+      "price": 290.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Chicken Wings Wet seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 2
+    },
+    {
+      "id": "m_31",
+      "name": "Chicken Lollipop Dry",
+      "price": 280.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Chicken Lollipop Dry seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 3
+    },
+    {
+      "id": "m_32",
+      "name": "Chicken Lollipop Wet",
+      "price": 300.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Chicken Lollipop Wet seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 4
+    },
+    {
+      "id": "m_33",
+      "name": "Chilli Chicken",
+      "price": 260.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Chicken seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 5
+    },
+    {
+      "id": "m_34",
+      "name": "Chicken 65",
+      "price": 270.0,
+      "category_id": "c_3",
+      "description": "Classic spicy deep-fried chicken cubes marinated in ginger, garlic, and hot red chilies.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 6
+    },
+    {
+      "id": "m_35",
+      "name": "Chicken Fry Bone",
+      "price": 280.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Chicken Fry Bone seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 7
+    },
+    {
+      "id": "m_36",
+      "name": "Kaju Chicken",
+      "price": 290.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Kaju Chicken seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 8
+    },
+    {
+      "id": "m_37",
+      "name": "Chicken 555",
+      "price": 280.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Chicken 555 seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 9
+    },
+    {
+      "id": "m_38",
+      "name": "Dragon Chicken",
+      "price": 280.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Dragon Chicken seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 10
+    },
+    {
+      "id": "m_39",
+      "name": "Red Hot Chicken",
+      "price": 290.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Red Hot Chicken seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 11
+    },
+    {
+      "id": "m_40",
+      "name": "Kouju Pitta Roast",
+      "price": 280.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Kouju Pitta Roast seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 12
+    },
+    {
+      "id": "m_41",
+      "name": "Kouju Pitta 65",
+      "price": 290.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Kouju Pitta seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 13
+    },
+    {
+      "id": "m_42",
+      "name": "Lemon Chicken",
+      "price": 270.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Lemon Chicken seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 14
+    },
+    {
+      "id": "m_43",
+      "name": "Pepper Chicken",
+      "price": 290.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Pepper Chicken seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 15
+    },
+    {
+      "id": "m_44",
+      "name": "RR Chicken",
+      "price": 290.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh RR Chicken seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 16
+    },
+    {
+      "id": "m_45",
+      "name": "Apollo Fish",
+      "price": 320.0,
+      "category_id": "c_3",
+      "description": "Spicy deep-fried fish fillets tossed in yogurt, curry leaves, and a special house spice blend.",
+      "image_url": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": true,
+      "display_order": 17
+    },
+    {
+      "id": "m_46",
+      "name": "Crispy Chicken",
+      "price": 290.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Crispy Chicken seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 18
+    },
+    {
+      "id": "m_47",
+      "name": "Chicken Manchurian",
+      "price": 270.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Chicken n seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 19
+    },
+    {
+      "id": "m_48",
+      "name": "Chicken Majestic",
+      "price": 290.0,
+      "category_id": "c_3",
+      "description": "Tender chicken cubes tossed in a spicy, aromatic green chili soy sauce with fresh curry leaves.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": true,
+      "display_order": 20
+    },
+    {
+      "id": "m_49",
+      "name": "Garlic Chicken",
+      "price": 290.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Garlic Chicken seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 21
+    },
+    {
+      "id": "m_50",
+      "name": "Apollo Fried Fish",
+      "price": 300.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Apollo Fried Fish seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 22
+    },
+    {
+      "id": "m_51",
+      "name": "Apollo Chilli Fish",
+      "price": 320.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Apollo  Fish seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 23
+    },
+    {
+      "id": "m_52",
+      "name": "Apollo Crispy Fish",
+      "price": 320.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Apollo Crispy Fish seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 24
+    },
+    {
+      "id": "m_53",
+      "name": "Pepper Prawns",
+      "price": 340.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Pepper Prawns seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 25
+    },
+    {
+      "id": "m_54",
+      "name": "Crispy Prawns",
+      "price": 370.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Crispy Prawns seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 26
+    },
+    {
+      "id": "m_55",
+      "name": "Loose Prawns",
+      "price": 350.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Loose Prawns seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 27
+    },
+    {
+      "id": "m_56",
+      "name": "Chilli Prawns",
+      "price": 340.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Prawns seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 28
+    },
+    {
+      "id": "m_57",
+      "name": "Golden Prawns",
+      "price": 340.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Golden Prawns seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 29
+    },
+    {
+      "id": "m_58",
+      "name": "Coriander Chicken",
+      "price": 300.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Coriander Chicken seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 30
+    },
+    {
+      "id": "m_59",
+      "name": "Slice Chicken",
+      "price": 290.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Slice Chicken seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 31
+    },
+    {
+      "id": "m_60",
+      "name": "Finger Chicken",
+      "price": 290.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Finger Chicken seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 32
+    },
+    {
+      "id": "m_61",
+      "name": "Malai Chicken",
+      "price": 300.0,
+      "category_id": "c_3",
+      "description": "Crispy, hot vegetarian appetizer made of fresh Malai Chicken seasoned with house spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 33
+    },
+    {
+      "id": "m_62",
+      "name": "Andhra Chicken Curry",
+      "price": 270.0,
+      "category_id": "c_4",
+      "description": "A delicious vegetarian gravy made with fresh Andhra Chicken slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 1
+    },
+    {
+      "id": "m_63",
+      "name": "Butter Chicken Curry",
+      "price": 280.0,
+      "category_id": "c_4",
+      "description": "Tender boneless chicken tikka cooked in a rich, creamy tomato and butter sauce infused with fenugreek.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 2
+    },
+    {
+      "id": "m_64",
+      "name": "Mughlai Chicken Curry",
+      "price": 280.0,
+      "category_id": "c_4",
+      "description": "A delicious vegetarian gravy made with fresh Mughlai Chicken slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 3
+    },
+    {
+      "id": "m_65",
+      "name": "Kadai Chicken Curry",
+      "price": 280.0,
+      "category_id": "c_4",
+      "description": "A delicious vegetarian gravy made with fresh Kadai Chicken slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 4
+    },
+    {
+      "id": "m_66",
+      "name": "Chicken Boneless Curry",
+      "price": 270.0,
+      "category_id": "c_4",
+      "description": "A delicious vegetarian gravy made with fresh Chicken Boneless slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 5
+    },
+    {
+      "id": "m_67",
+      "name": "Punjabi Chicken Curry",
+      "price": 280.0,
+      "category_id": "c_4",
+      "description": "A delicious vegetarian gravy made with fresh Punjabi Chicken slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 6
+    },
+    {
+      "id": "m_68",
+      "name": "Afghani Chicken Curry",
+      "price": 320.0,
+      "category_id": "c_4",
+      "description": "A delicious vegetarian gravy made with fresh Afghani Chicken slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 7
+    },
+    {
+      "id": "m_69",
+      "name": "Kaju Chicken Curry",
+      "price": 280.0,
+      "category_id": "c_4",
+      "description": "A delicious vegetarian gravy made with fresh Kaju Chicken slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 8
+    },
+    {
+      "id": "m_70",
+      "name": "Kouju Pitta Curry",
+      "price": 290.0,
+      "category_id": "c_4",
+      "description": "A delicious vegetarian gravy made with fresh Kouju Pitta slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 9
+    },
+    {
+      "id": "m_71",
+      "name": "Chicken Tikka Masala",
+      "price": 320.0,
+      "category_id": "c_4",
+      "description": "A delicious vegetarian gravy made with fresh Chicken Tikka Masala slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 10
+    },
+    {
+      "id": "m_72",
+      "name": "Natukodi Curry",
+      "price": 340.0,
+      "category_id": "c_4",
+      "description": "A delicious vegetarian gravy made with fresh Natukodi slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 11
+    },
+    {
+      "id": "m_73",
+      "name": "Prawns Curry",
+      "price": 330.0,
+      "category_id": "c_4",
+      "description": "A delicious vegetarian gravy made with fresh Prawns slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 12
+    },
+    {
+      "id": "m_74",
+      "name": "Apollo Fish Curry",
+      "price": 290.0,
+      "category_id": "c_4",
+      "description": "Spicy deep-fried fish fillets tossed in yogurt, curry leaves, and a special house spice blend.",
+      "image_url": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 13
+    },
+    {
+      "id": "m_75",
+      "name": "Kadai Prawns",
+      "price": 340.0,
+      "category_id": "c_4",
+      "description": "A delicious vegetarian gravy made with fresh Kadai Prawns slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 14
+    },
+    {
+      "id": "m_76",
+      "name": "Maharani Chicken Curry (Boneless)",
+      "price": 280.0,
+      "category_id": "c_4",
+      "description": "A delicious vegetarian gravy made with fresh Maharani Chicken  (Boneless) slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 15
+    },
+    {
+      "id": "m_77",
+      "name": "Maharaja Chicken Curry (Bone)",
+      "price": 270.0,
+      "category_id": "c_4",
+      "description": "A delicious vegetarian gravy made with fresh Maharaja Chicken  (Bone) slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 16
+    },
+    {
+      "id": "m_78",
+      "name": "Tomato Curry",
+      "price": 150.0,
+      "category_id": "c_5",
+      "description": "A delicious vegetarian gravy made with fresh Tomato slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 1
+    },
+    {
+      "id": "m_79",
+      "name": "Kaju Tomato Curry",
+      "price": 250.0,
+      "category_id": "c_5",
+      "description": "A delicious vegetarian gravy made with fresh Kaju Tomato slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 2
+    },
+    {
+      "id": "m_80",
+      "name": "Mixed Veg Curry",
+      "price": 230.0,
+      "category_id": "c_5",
+      "description": "A delicious vegetarian gravy made with fresh Mixed Veg slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 3
+    },
+    {
+      "id": "m_81",
+      "name": "Methi Chaman",
+      "price": 250.0,
+      "category_id": "c_5",
+      "description": "A delicious vegetarian gravy made with fresh Methi Chaman slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 4
+    },
+    {
+      "id": "m_82",
+      "name": "Plain Palak",
+      "price": 220.0,
+      "category_id": "c_5",
+      "description": "A delicious vegetarian gravy made with fresh Plain Palak slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 5
+    },
+    {
+      "id": "m_83",
+      "name": "Palak Paneer",
+      "price": 250.0,
+      "category_id": "c_5",
+      "description": "A delicious vegetarian gravy made with fresh Palak Paneer slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 6
+    },
+    {
+      "id": "m_84",
+      "name": "Paneer Butter Masala",
+      "price": 260.0,
+      "category_id": "c_5",
+      "description": "Soft paneer cubes cooked in a sweet, rich, and creamy tomato-butter gravy with traditional herbs.",
+      "image_url": "https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 7
+    },
+    {
+      "id": "m_85",
+      "name": "Paneer Korma Curry",
+      "price": 260.0,
+      "category_id": "c_5",
+      "description": "A delicious vegetarian gravy made with fresh Paneer Korma slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 8
+    },
+    {
+      "id": "m_86",
+      "name": "Kadai Paneer Curry",
+      "price": 260.0,
+      "category_id": "c_5",
+      "description": "A delicious vegetarian gravy made with fresh Kadai Paneer slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 9
+    },
+    {
+      "id": "m_87",
+      "name": "Kaju Paneer Curry",
+      "price": 270.0,
+      "category_id": "c_5",
+      "description": "A delicious vegetarian gravy made with fresh Kaju Paneer slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 10
+    },
+    {
+      "id": "m_88",
+      "name": "Kaju Masala Curry",
+      "price": 270.0,
+      "category_id": "c_5",
+      "description": "A delicious vegetarian gravy made with fresh Kaju Masala slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 11
+    },
+    {
+      "id": "m_89",
+      "name": "Mushroom Curry",
+      "price": 250.0,
+      "category_id": "c_5",
+      "description": "A delicious vegetarian gravy made with fresh Mushroom slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 12
+    },
+    {
+      "id": "m_90",
+      "name": "Kadai Mushroom",
+      "price": 270.0,
+      "category_id": "c_5",
+      "description": "A delicious vegetarian gravy made with fresh Kadai Mushroom slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 13
+    },
+    {
+      "id": "m_91",
+      "name": "Egg Curry",
+      "price": 200.0,
+      "category_id": "c_5",
+      "description": "A delicious vegetarian gravy made with fresh Egg slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 14
+    },
+    {
+      "id": "m_92",
+      "name": "Egg Burji",
+      "price": 200.0,
+      "category_id": "c_5",
+      "description": "A delicious vegetarian gravy made with fresh Egg Burji slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 15
+    },
+    {
+      "id": "m_93",
+      "name": "Egg Kheema",
+      "price": 150.0,
+      "category_id": "c_5",
+      "description": "A delicious vegetarian gravy made with fresh Egg Kheema slow-simmered in an onion-tomato gravy with roasted spices.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 16
+    },
+    {
+      "id": "m_94",
+      "name": "Veg Biryani",
+      "price": 250.0,
+      "category_id": "c_6",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful Veg.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 1
+    },
+    {
+      "id": "m_95",
+      "name": "Egg Biryani",
+      "price": 230.0,
+      "category_id": "c_6",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful Egg.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 2
+    },
+    {
+      "id": "m_96",
+      "name": "Paneer Biryani",
+      "price": 260.0,
+      "category_id": "c_6",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful Paneer.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 3
+    },
+    {
+      "id": "m_97",
+      "name": "Kaju Biryani",
+      "price": 260.0,
+      "category_id": "c_6",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful Kaju.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 4
+    },
+    {
+      "id": "m_98",
+      "name": "Mushroom Biryani",
+      "price": 260.0,
+      "category_id": "c_6",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful Mushroom.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 5
+    },
+    {
+      "id": "m_99",
+      "name": "Baby Corn Biryani",
+      "price": 250.0,
+      "category_id": "c_6",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful Baby Corn.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 6
+    },
+    {
+      "id": "m_100",
+      "name": "Paneer Tikka Biryani",
+      "price": 250.0,
+      "category_id": "c_6",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful Paneer Tikka.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 7
+    },
+    {
+      "id": "m_101",
+      "name": "Curd Rice",
+      "price": 130.0,
+      "category_id": "c_6",
+      "description": "Soft cooked rice mixed with fresh yogurt, tempered with mustard seeds, curry leaves, and green chilies.",
+      "image_url": "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 8
+    },
+    {
+      "id": "m_102",
+      "name": "Hyderabadi Dum Biryani",
+      "price": 260.0,
+      "category_id": "c_7",
+      "description": "Our signature dish. Slow-cooked marinated chicken layered with premium aromatic basmati rice and dum spices.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": true,
+      "display_order": 1
+    },
+    {
+      "id": "m_103",
+      "name": "Chicken Fry Bone Biryani",
+      "price": 280.0,
+      "category_id": "c_7",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful Chicken Fry Bone.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 2
+    },
+    {
+      "id": "m_104",
+      "name": "Chicken Fry Boneless Biryani",
+      "price": 300.0,
+      "category_id": "c_7",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful Chicken Fry Boneless.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 3
+    },
+    {
+      "id": "m_105",
+      "name": "SP Chicken Biryani",
+      "price": 280.0,
+      "category_id": "c_7",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful SP Chicken.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 4
+    },
+    {
+      "id": "m_106",
+      "name": "Chicken Wings Biryani Dry",
+      "price": 270.0,
+      "category_id": "c_7",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful Chicken Wings  Dry.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 5
+    },
+    {
+      "id": "m_107",
+      "name": "Chicken Wings Biryani Semi Gravy",
+      "price": 280.0,
+      "category_id": "c_7",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful Chicken Wings  Semi Gravy.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 6
+    },
+    {
+      "id": "m_108",
+      "name": "Chicken Lollipop Biryani Dry",
+      "price": 270.0,
+      "category_id": "c_7",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful Chicken Lollipop  Dry.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 7
+    },
+    {
+      "id": "m_109",
+      "name": "Chicken Lollipop Biryani Semi Gravy",
+      "price": 280.0,
+      "category_id": "c_7",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful Chicken Lollipop  Semi Gravy.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 8
+    },
+    {
+      "id": "m_110",
+      "name": "Prawns Fry Biryani",
+      "price": 340.0,
+      "category_id": "c_7",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful Prawns Fry.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 9
+    },
+    {
+      "id": "m_111",
+      "name": "Prawns Curry Biryani",
+      "price": 370.0,
+      "category_id": "c_7",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful Prawns Curry.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 10
+    },
+    {
+      "id": "m_112",
+      "name": "Apollo Fish Biryani",
+      "price": 290.0,
+      "category_id": "c_7",
+      "description": "Spicy deep-fried fish fillets tossed in yogurt, curry leaves, and a special house spice blend.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 11
+    },
+    {
+      "id": "m_113",
+      "name": "Chicken Mughlai Biryani",
+      "price": 300.0,
+      "category_id": "c_7",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful Chicken Mughlai.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 12
+    },
+    {
+      "id": "m_114",
+      "name": "Kouju Pitta Biryani",
+      "price": 310.0,
+      "category_id": "c_7",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful Kouju Pitta.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 13
+    },
+    {
+      "id": "m_115",
+      "name": "Chicken Tikka Biryani",
+      "price": 290.0,
+      "category_id": "c_7",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful Chicken Tikka.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 14
+    },
+    {
+      "id": "m_116",
+      "name": "Chicken Joint Biryani",
+      "price": 320.0,
+      "category_id": "c_7",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful Chicken Joint.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 15
+    },
+    {
+      "id": "m_117",
+      "name": "Mixed Non",
+      "price": 0.0,
+      "category_id": "c_7",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful Mixed Non.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 16
+    },
+    {
+      "id": "m_118",
+      "name": "Chicken Kheema Biryani",
+      "price": 370.0,
+      "category_id": "c_7",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful Chicken Kheema.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 17
+    },
+    {
+      "id": "m_119",
+      "name": "Natukodi Curry Biryani",
+      "price": 370.0,
+      "category_id": "c_7",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful Natukodi Curry.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 18
+    },
+    {
+      "id": "m_120",
+      "name": "Mutton Dum Biryani",
+      "price": 420.0,
+      "category_id": "c_7",
+      "description": "Premium tender mutton pieces cooked with rich spices in authentic Hyderabadi style, layered with premium basmati rice.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": true,
+      "display_order": 19
+    },
+    {
+      "id": "m_121",
+      "name": "Mutton Curry Biryani",
+      "price": 470.0,
+      "category_id": "c_7",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful Mutton Curry.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 20
+    },
+    {
+      "id": "m_122",
+      "name": "Mutton Fry Biryani",
+      "price": 450.0,
+      "category_id": "c_7",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful Mutton Fry.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 21
+    },
+    {
+      "id": "m_123",
+      "name": "Pot SP Biryani",
+      "price": 320.0,
+      "category_id": "c_7",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful Pot SP.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 22
+    },
+    {
+      "id": "m_124",
+      "name": "Pot Fry Biryani",
+      "price": 320.0,
+      "category_id": "c_7",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful Pot Fry.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 23
+    },
+    {
+      "id": "m_125",
+      "name": "Potlam Biryani",
+      "price": 400.0,
+      "category_id": "c_7",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful Potlam.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 24
+    },
+    {
+      "id": "m_126",
+      "name": "Rambo Biryani",
+      "price": 300.0,
+      "category_id": "c_7",
+      "description": "Aromatic long-grain basmati rice cooked with traditional dum spices and flavorful Rambo.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 25
+    },
+    {
+      "id": "m_127",
+      "name": "Tandoori Roti",
+      "price": 40.0,
+      "category_id": "c_8",
+      "description": "Warm, traditional flatbread baked in a clay tandoor oven.",
+      "image_url": "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 1
+    },
+    {
+      "id": "m_128",
+      "name": "Butter Roti",
+      "price": 50.0,
+      "category_id": "c_8",
+      "description": "Fresh, hot clay-oven baked bread, perfect to pair with our delicious curries.",
+      "image_url": "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 2
+    },
+    {
+      "id": "m_129",
+      "name": "Butter Naan",
+      "price": 40.0,
+      "category_id": "c_8",
+      "description": "Soft, fluffy leavened flatbread brushed with premium melted butter, baked hot in a clay tandoor.",
+      "image_url": "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": true,
+      "display_order": 3
+    },
+    {
+      "id": "m_130",
+      "name": "Garlic Roti",
+      "price": 50.0,
+      "category_id": "c_8",
+      "description": "Fresh, hot clay-oven baked bread, perfect to pair with our delicious curries.",
+      "image_url": "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 4
+    },
+    {
+      "id": "m_131",
+      "name": "Garlic Naan",
+      "price": 50.0,
+      "category_id": "c_8",
+      "description": "Fresh, hot clay-oven baked bread, perfect to pair with our delicious curries.",
+      "image_url": "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 5
+    },
+    {
+      "id": "m_132",
+      "name": "Paneer Kulcha",
+      "price": 70.0,
+      "category_id": "c_8",
+      "description": "Fresh, hot clay-oven baked bread, perfect to pair with our delicious curries.",
+      "image_url": "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 6
+    },
+    {
+      "id": "m_133",
+      "name": "Masala Kulcha",
+      "price": 70.0,
+      "category_id": "c_8",
+      "description": "Fresh, hot clay-oven baked bread, perfect to pair with our delicious curries.",
+      "image_url": "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 7
+    },
+    {
+      "id": "m_134",
+      "name": "Pudina Naan",
+      "price": 60.0,
+      "category_id": "c_8",
+      "description": "Fresh, hot clay-oven baked bread, perfect to pair with our delicious curries.",
+      "image_url": "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 8
+    },
+    {
+      "id": "m_135",
+      "name": "Coriander Naan",
+      "price": 60.0,
+      "category_id": "c_8",
+      "description": "Fresh, hot clay-oven baked bread, perfect to pair with our delicious curries.",
+      "image_url": "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 9
+    },
+    {
+      "id": "m_136",
+      "name": "Plain Kulcha",
+      "price": 50.0,
+      "category_id": "c_8",
+      "description": "Fresh, hot clay-oven baked bread, perfect to pair with our delicious curries.",
+      "image_url": "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 10
+    },
+    {
+      "id": "m_137",
+      "name": "Butter Kulcha",
+      "price": 60.0,
+      "category_id": "c_8",
+      "description": "Fresh, hot clay-oven baked bread, perfect to pair with our delicious curries.",
+      "image_url": "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 11
+    },
+    {
+      "id": "m_138",
+      "name": "Chicken Tandoori (Half)",
+      "price": 280.0,
+      "category_id": "c_9",
+      "description": "Fresh and authentic Chicken Tandoori (Half) prepared with premium ingredients by our master chefs.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 1
+    },
+    {
+      "id": "m_139",
+      "name": "Chicken Tandoori (Full)",
+      "price": 550.0,
+      "category_id": "c_9",
+      "description": "Fresh and authentic Chicken Tandoori (Full) prepared with premium ingredients by our master chefs.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 2
+    },
+    {
+      "id": "m_140",
+      "name": "Grill Chicken (Half)",
+      "price": 290.0,
+      "category_id": "c_9",
+      "description": "Fresh and authentic Grill Chicken (Half) prepared with premium ingredients by our master chefs.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 3
+    },
+    {
+      "id": "m_141",
+      "name": "Grill Chicken (Full)",
+      "price": 480.0,
+      "category_id": "c_9",
+      "description": "Fresh and authentic Grill Chicken (Full) prepared with premium ingredients by our master chefs.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 4
+    },
+    {
+      "id": "m_142",
+      "name": "Tandoori Kebab",
+      "price": 270.0,
+      "category_id": "c_9",
+      "description": "Fresh and authentic Tandoori Kebab prepared with premium ingredients by our master chefs.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 5
+    },
+    {
+      "id": "m_143",
+      "name": "Chicken Tikka",
+      "price": 290.0,
+      "category_id": "c_9",
+      "description": "Fresh and authentic Chicken Tikka prepared with premium ingredients by our master chefs.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": true,
+      "display_order": 6
+    },
+    {
+      "id": "m_144",
+      "name": "Tandoori Tikka",
+      "price": 290.0,
+      "category_id": "c_9",
+      "description": "Fresh and authentic Tandoori Tikka prepared with premium ingredients by our master chefs.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 7
+    },
+    {
+      "id": "m_145",
+      "name": "Hariyali Kebab",
+      "price": 280.0,
+      "category_id": "c_9",
+      "description": "Fresh and authentic Hariyali Kebab prepared with premium ingredients by our master chefs.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 8
+    },
+    {
+      "id": "m_146",
+      "name": "Malai Kebab",
+      "price": 280.0,
+      "category_id": "c_9",
+      "description": "Fresh and authentic Malai Kebab prepared with premium ingredients by our master chefs.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 9
+    },
+    {
+      "id": "m_147",
+      "name": "Reshmi Kebab",
+      "price": 300.0,
+      "category_id": "c_9",
+      "description": "Fresh and authentic Reshmi Kebab prepared with premium ingredients by our master chefs.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 10
+    },
+    {
+      "id": "m_148",
+      "name": "Paneer Tikka",
+      "price": 270.0,
+      "category_id": "c_9",
+      "description": "Fresh and authentic Paneer Tikka prepared with premium ingredients by our master chefs.",
+      "image_url": "https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 11
+    },
+    {
+      "id": "m_149",
+      "name": "Murgh Mirch Kebab",
+      "price": 320.0,
+      "category_id": "c_9",
+      "description": "Fresh and authentic Murgh Mirch Kebab prepared with premium ingredients by our master chefs.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 12
+    },
+    {
+      "id": "m_150",
+      "name": "Mythri Special Kebab",
+      "price": 360.0,
+      "category_id": "c_9",
+      "description": "Fresh and authentic Mythri Special Kebab prepared with premium ingredients by our master chefs.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": true,
+      "display_order": 13
+    },
+    {
+      "id": "m_151",
+      "name": "Prawns Tikka",
+      "price": 360.0,
+      "category_id": "c_9",
+      "description": "Fresh and authentic Prawns Tikka prepared with premium ingredients by our master chefs.",
+      "image_url": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 14
+    },
+    {
+      "id": "m_152",
+      "name": "Andhra Kebab",
+      "price": 300.0,
+      "category_id": "c_9",
+      "description": "Fresh and authentic Andhra Kebab prepared with premium ingredients by our master chefs.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 15
+    },
+    {
+      "id": "m_153",
+      "name": "Lemon Kebab",
+      "price": 300.0,
+      "category_id": "c_9",
+      "description": "Fresh and authentic Lemon Kebab prepared with premium ingredients by our master chefs.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 16
+    },
+    {
+      "id": "m_154",
+      "name": "Arabian Mandi",
+      "price": 900.0,
+      "category_id": "c_10",
+      "description": "Authentic Arabian Mandi rice cooked in rich meat stock, served with tender chicken, toasted nuts, and raisins.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": true,
+      "display_order": 1
+    },
+    {
+      "id": "m_155",
+      "name": "Tandoori Mandi",
+      "price": 850.0,
+      "category_id": "c_10",
+      "description": "Fragrant mandi rice seasoned with middle-eastern spices, served family-style with roasted Tandoori.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 2
+    },
+    {
+      "id": "m_156",
+      "name": "Grill Mandi",
+      "price": 850.0,
+      "category_id": "c_10",
+      "description": "Fragrant mandi rice seasoned with middle-eastern spices, served family-style with roasted Grill.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 3
+    },
+    {
+      "id": "m_157",
+      "name": "Dum Biryani Family Pack",
+      "price": 620.0,
+      "category_id": "c_10",
+      "description": "Fragrant mandi rice seasoned with middle-eastern spices, served family-style with roasted Dum Biryani.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 4
+    },
+    {
+      "id": "m_158",
+      "name": "Fry Biryani Family (Bone)",
+      "price": 640.0,
+      "category_id": "c_10",
+      "description": "Fragrant mandi rice seasoned with middle-eastern spices, served family-style with roasted Fry Biryani Family (Bone).",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 5
+    },
+    {
+      "id": "m_159",
+      "name": "Fry Biryani Family (Boneless)",
+      "price": 670.0,
+      "category_id": "c_10",
+      "description": "Fragrant mandi rice seasoned with middle-eastern spices, served family-style with roasted Fry Biryani Family (Boneless).",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 6
+    },
+    {
+      "id": "m_160",
+      "name": "SP Biryani Family",
+      "price": 670.0,
+      "category_id": "c_10",
+      "description": "Fragrant mandi rice seasoned with middle-eastern spices, served family-style with roasted SP Biryani Family.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 7
+    },
+    {
+      "id": "m_161",
+      "name": "Wings Biryani Family Dry",
+      "price": 690.0,
+      "category_id": "c_10",
+      "description": "Fragrant mandi rice seasoned with middle-eastern spices, served family-style with roasted Wings Biryani Family Dry.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 8
+    },
+    {
+      "id": "m_162",
+      "name": "Wings Biryani Family Semi Gravy",
+      "price": 710.0,
+      "category_id": "c_10",
+      "description": "Fragrant mandi rice seasoned with middle-eastern spices, served family-style with roasted Wings Biryani Family Semi Gravy.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 9
+    },
+    {
+      "id": "m_163",
+      "name": "Lollipop Biryani Family Dry",
+      "price": 690.0,
+      "category_id": "c_10",
+      "description": "Fragrant mandi rice seasoned with middle-eastern spices, served family-style with roasted Lollipop Biryani Family Dry.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 10
+    },
+    {
+      "id": "m_164",
+      "name": "Lollipop Biryani Family Semi Gravy",
+      "price": 710.0,
+      "category_id": "c_10",
+      "description": "Fragrant mandi rice seasoned with middle-eastern spices, served family-style with roasted Lollipop Biryani Family Semi Gravy.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 11
+    },
+    {
+      "id": "m_165",
+      "name": "Prawns Fry Biryani Family",
+      "price": 900.0,
+      "category_id": "c_10",
+      "description": "Fragrant mandi rice seasoned with middle-eastern spices, served family-style with roasted Prawns Fry Biryani Family.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 12
+    },
+    {
+      "id": "m_166",
+      "name": "Prawns Curry Biryani Family",
+      "price": 970.0,
+      "category_id": "c_10",
+      "description": "Fragrant mandi rice seasoned with middle-eastern spices, served family-style with roasted Prawns Curry Biryani Family.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 13
+    },
+    {
+      "id": "m_167",
+      "name": "Mutton Curry Biryani Family",
+      "price": 1150.0,
+      "category_id": "c_10",
+      "description": "Fragrant mandi rice seasoned with middle-eastern spices, served family-style with roasted Mutton Curry Biryani Family.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 14
+    },
+    {
+      "id": "m_168",
+      "name": "Veg Fried Rice",
+      "price": 220.0,
+      "category_id": "c_11",
+      "description": "Flavorful, wok-tossed aromatic rice stir-fried with fresh scallions, beans, carrots, and choice of Veg.",
+      "image_url": "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 1
+    },
+    {
+      "id": "m_169",
+      "name": "Egg Fried Rice",
+      "price": 220.0,
+      "category_id": "c_11",
+      "description": "Flavorful, wok-tossed aromatic rice stir-fried with fresh scallions, beans, carrots, and choice of Egg.",
+      "image_url": "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 2
+    },
+    {
+      "id": "m_170",
+      "name": "Paneer Fried Rice",
+      "price": 230.0,
+      "category_id": "c_11",
+      "description": "Flavorful, wok-tossed aromatic rice stir-fried with fresh scallions, beans, carrots, and choice of Paneer.",
+      "image_url": "https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 3
+    },
+    {
+      "id": "m_171",
+      "name": "Kaju Fried Rice",
+      "price": 250.0,
+      "category_id": "c_11",
+      "description": "Flavorful, wok-tossed aromatic rice stir-fried with fresh scallions, beans, carrots, and choice of Kaju.",
+      "image_url": "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 4
+    },
+    {
+      "id": "m_172",
+      "name": "Mushroom Fried Rice",
+      "price": 250.0,
+      "category_id": "c_11",
+      "description": "Flavorful, wok-tossed aromatic rice stir-fried with fresh scallions, beans, carrots, and choice of Mushroom.",
+      "image_url": "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 5
+    },
+    {
+      "id": "m_173",
+      "name": "Baby Corn Fried Rice",
+      "price": 240.0,
+      "category_id": "c_11",
+      "description": "Flavorful, wok-tossed aromatic rice stir-fried with fresh scallions, beans, carrots, and choice of Baby Corn.",
+      "image_url": "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 6
+    },
+    {
+      "id": "m_174",
+      "name": "Jeera Rice",
+      "price": 170.0,
+      "category_id": "c_11",
+      "description": "Flavorful, wok-tossed aromatic rice stir-fried with fresh scallions, beans, carrots, and choice of Jeera Rice.",
+      "image_url": "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 7
+    },
+    {
+      "id": "m_175",
+      "name": "Chicken Fried Rice",
+      "price": 250.0,
+      "category_id": "c_11",
+      "description": "Flavorful, wok-tossed aromatic rice stir-fried with fresh scallions, beans, carrots, and choice of Chicken.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 8
+    },
+    {
+      "id": "m_176",
+      "name": "Prawns Fried Rice",
+      "price": 320.0,
+      "category_id": "c_11",
+      "description": "Flavorful, wok-tossed aromatic rice stir-fried with fresh scallions, beans, carrots, and choice of Prawns.",
+      "image_url": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 9
+    },
+    {
+      "id": "m_177",
+      "name": "Apollo Fish Fried Rice",
+      "price": 320.0,
+      "category_id": "c_11",
+      "description": "Spicy deep-fried fish fillets tossed in yogurt, curry leaves, and a special house spice blend.",
+      "image_url": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 10
+    },
+    {
+      "id": "m_178",
+      "name": "Mixed Non",
+      "price": 0.0,
+      "category_id": "c_11",
+      "description": "Flavorful, wok-tossed aromatic rice stir-fried with fresh scallions, beans, carrots, and choice of Mixed Non.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 11
+    },
+    {
+      "id": "m_179",
+      "name": "Schezwan Chicken Fried Rice",
+      "price": 270.0,
+      "category_id": "c_11",
+      "description": "Flavorful, wok-tossed aromatic rice stir-fried with fresh scallions, beans, carrots, and choice of Schezwan Chicken.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 12
+    },
+    {
+      "id": "m_180",
+      "name": "Mythri Special Kebab",
+      "price": 370.0,
+      "category_id": "c_12",
+      "description": "Fresh and authentic Mythri Special Kebab prepared with premium ingredients by our master chefs.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": true,
+      "display_order": 1
+    },
+    {
+      "id": "m_181",
+      "name": "Hariyali Kebab (3 pcs)",
+      "price": 380.0,
+      "category_id": "c_12",
+      "description": "Fresh and authentic Hariyali Kebab (3 pcs) prepared with premium ingredients by our master chefs.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 2
+    },
+    {
+      "id": "m_182",
+      "name": "Malai Kebab (3 pcs)",
+      "price": 250.0,
+      "category_id": "c_12",
+      "description": "Fresh and authentic Malai Kebab (3 pcs) prepared with premium ingredients by our master chefs.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 3
+    },
+    {
+      "id": "m_183",
+      "name": "Chicken Tikka (3 pcs)",
+      "price": 300.0,
+      "category_id": "c_12",
+      "description": "Fresh and authentic Chicken Tikka (3 pcs) prepared with premium ingredients by our master chefs.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 4
+    },
+    {
+      "id": "m_184",
+      "name": "Mythri Special Biryani (4 Dum Pieces + 1 Egg)",
+      "price": 250.0,
+      "category_id": "c_12",
+      "description": "Fresh and authentic Mythri Special Biryani (4 Dum Pieces + 1 Egg) prepared with premium ingredients by our master chefs.",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 5
+    },
+    {
+      "id": "m_185",
+      "name": "Veg Meals",
+      "price": 100.0,
+      "category_id": "c_13",
+      "description": "Traditional complete meal platter served with steamed rice, curries, and sides.",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 1
+    },
+    {
+      "id": "m_186",
+      "name": "White Rice & Chicken Curry",
+      "price": 250.0,
+      "category_id": "c_13",
+      "description": "Traditional complete meal platter served with steamed rice, curries, and sides.",
+      "image_url": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 2
+    },
+    {
+      "id": "m_187",
+      "name": "White Rice & Mutton Curry",
+      "price": 350.0,
+      "category_id": "c_13",
+      "description": "Traditional complete meal platter served with steamed rice, curries, and sides.",
+      "image_url": "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 3
+    },
+    {
+      "id": "m_188",
+      "name": "Lassi",
+      "price": 30.0,
+      "category_id": "c_14",
+      "description": "Sweet and creamy traditional yogurt drink, blended with cardamom and served chilled.",
+      "image_url": "https://images.unsplash.com/photo-1541658016709-82535e94bc69?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 1
+    },
+    {
+      "id": "m_189",
+      "name": "Butter Milk",
+      "price": 50.0,
+      "category_id": "c_14",
+      "description": "Cool, refreshing Butter Milk drink, freshly prepared and served chilled to complement your hot meal.",
+      "image_url": "https://images.unsplash.com/photo-1541658016709-82535e94bc69?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 2
+    },
+    {
+      "id": "m_190",
+      "name": "Badam Milk",
+      "price": 30.0,
+      "category_id": "c_14",
+      "description": "Cool, refreshing Badam Milk drink, freshly prepared and served chilled to complement your hot meal.",
+      "image_url": "https://images.unsplash.com/photo-1541658016709-82535e94bc69?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 3
+    },
+    {
+      "id": "m_191",
+      "name": "Lemon Water",
+      "price": 20.0,
+      "category_id": "c_14",
+      "description": "Cool, refreshing Lemon Water drink, freshly prepared and served chilled to complement your hot meal.",
+      "image_url": "https://images.unsplash.com/photo-1541658016709-82535e94bc69?auto=format&fit=crop&w=600&q=80",
+      "status": "visible",
+      "is_popular": false,
+      "display_order": 4
+    }
+  ],
+
+  "gallery_images": [
+    {
+      "id": "g1",
+      "image_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80",
+      "category": "Food",
+      "display_order": 1
+    },
+    {
+      "id": "g2",
+      "image_url": "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&w=600&q=80",
+      "category": "Food",
+      "display_order": 2
+    },
+    {
+      "id": "g3",
+      "image_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+      "category": "Food",
+      "display_order": 3
+    },
+    {
+      "id": "g4",
+      "image_url": "https://images.unsplash.com/photo-1562967914-608f82629710?auto=format&fit=crop&w=600&q=80",
+      "category": "Food",
+      "display_order": 4
+    },
+    {
+      "id": "g5",
+      "image_url": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80",
+      "category": "Ambience",
+      "display_order": 1
+    },
+    {
+      "id": "g6",
+      "image_url": "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=600&q=80",
+      "category": "Ambience",
+      "display_order": 2
+    },
+    {
+      "id": "g7",
+      "image_url": "https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?auto=format&fit=crop&w=600&q=80",
+      "category": "Family Dining",
+      "display_order": 1
+    }
+  ],
+  "reviews": [
+    {
+      "id": "r1",
+      "customer_name": "Rajesh Kumar",
+      "review_text": "The Chicken Dum Biryani here is absolutely sensational! Tastes authentic and full of flavor. Highly recommended for family dining.",
+      "rating": 5,
+      "photo_url": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
+      "status": "visible"
+    },
+    {
+      "id": "r2",
+      "customer_name": "Priya Sharma",
+      "review_text": "Amazing starters! Chicken Majestic was so tender and perfectly spiced. The ambiance is lovely for families, and service is quick.",
+      "rating": 5,
+      "photo_url": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80",
+      "status": "visible"
+    },
+    {
+      "id": "r3",
+      "customer_name": "Karthik S.",
+      "review_text": "Best Mandi in the area. Very generous portions and the rice was extremely flavorful. Ordering on WhatsApp is super convenient!",
+      "rating": 4,
+      "photo_url": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80",
+      "status": "visible"
+    }
+  ],
+  "customers": [],
+  "first_order_discounts": [],
+  "orders": []
+}
