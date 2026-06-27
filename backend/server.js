@@ -424,7 +424,20 @@ app.get('/api/status', (req, res) => {
   res.json({ status: 'online', mode: db.useSupabase ? 'supabase' : 'mock-fallback' });
 });
 
+// Serve static files from the React frontend build
+const frontendDistPath = path.join(__dirname, '../frontend/dist');
+app.use(express.static(frontendDistPath));
+
+// Anything that doesn't match an API route, send back the index.html file
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) {
+    return next();
+  }
+  res.sendFile(path.join(frontendDistPath, 'index.html'));
+});
+
 // Global error handler
+
 app.use((err, req, res, next) => {
   console.error('API Error:', err.message);
   res.status(err.status || 500).json({
