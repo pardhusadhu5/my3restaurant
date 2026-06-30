@@ -345,14 +345,13 @@ export default function CustomerSite({
                 >
                   Explore Our Menu
                 </button>
-                <a
-                  href={`https://wa.me/${waNumber}`}
-                  target="_blank"
+                <button
+                  onClick={() => { window.location.hash = '#/menu'; }}
                   className="w-full sm:w-fit px-8 py-3.5 bg-zinc-900/80 border border-zinc-800 hover:border-gold/30 text-white font-semibold uppercase rounded-xl hover:bg-zinc-800 transition text-xs tracking-wider flex items-center justify-center space-x-2"
                 >
                   <MessageSquare size={14} className="text-green-500" />
                   <span>Order on WhatsApp</span>
-                </a>
+                </button>
               </div>
 
             </div>
