@@ -392,10 +392,19 @@ CREATE TABLE IF NOT EXISTS orders (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 14. CUSTOMER FIRST ORDER DISCOUNTS USES
+CREATE TABLE IF NOT EXISTS customer_first_order_uses (
+    phone_number TEXT PRIMARY KEY,
+    first_order_discount_used BOOLEAN DEFAULT true,
+    discount_applied_at TIMESTAMPTZ DEFAULT NOW(),
+    order_id TEXT
+);
+
 -- Migrations (applied dynamically to existing tables if columns do not exist)
 ALTER TABLE website_settings ADD COLUMN IF NOT EXISTS first_order_discount_enabled BOOLEAN DEFAULT true;
 ALTER TABLE website_settings ADD COLUMN IF NOT EXISTS first_order_min_amount NUMERIC(10, 2) DEFAULT 250.00;
 ALTER TABLE website_settings ADD COLUMN IF NOT EXISTS first_order_discount_amount NUMERIC(10, 2) DEFAULT 100.00;
 
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS first_order_discount_reason TEXT;
+
 

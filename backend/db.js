@@ -71,7 +71,8 @@ function initLocalDB() {
         menu_categories: [],
         menu_items: [],
         gallery_images: [],
-        reviews: []
+        reviews: [],
+        customer_first_order_uses: []
       }, null, 2), 'utf8');
     }
   }
@@ -109,9 +110,17 @@ function readLocalDB() {
       needsWrite = true;
     }
 
+    // Auto-update if customer_first_order_uses doesn't exist
+    if (!local.customer_first_order_uses) {
+      console.log('Creating customer_first_order_uses array in local database...');
+      local.customer_first_order_uses = [];
+      needsWrite = true;
+    }
+
     if (needsWrite) {
       writeLocalDB(local);
     }
+
     
     return local;
   } catch (err) {
@@ -643,6 +652,57 @@ const db = {
     return null;
   },
 
+  async getFirstOrderUseByPhone(phone) {
+    if (useSupabase()) {
+      const { data, error } = await supabase.from('customer_first_order_uses')
+        .select('*')
+        .eq('phone_number', phone)
+        .maybeSingle();
+      if (!error && data) return data;
+    }
+    const local = readLocalDB();
+    return (local.customer_first_order_uses || []).find(u => u.phone_number === phone) || null;
+  },
+
+  async markFirstOrderUse(phone, orderId) {
+    const record = {
+      phone_number: phone,
+      first_order_discount_used: true,
+      discount_applied_at: new Date().toISOString(),
+      order_id: orderId
+    };
+
+    if (useSupabase()) {
+      const { error } = await supabase.from('customer_first_order_uses').upsert([record]);
+      if (error) console.error('Error upserting first order use in Supabase:', error.message);
+      return;
+    }
+
+    const local = readLocalDB();
+    if (!local.customer_first_order_uses) local.customer_first_order_uses = [];
+    const idx = local.customer_first_order_uses.findIndex(u => u.phone_number === phone);
+    if (idx > -1) {
+      local.customer_first_order_uses[idx] = record;
+    } else {
+      local.customer_first_order_uses.push(record);
+    }
+    writeLocalDB(local);
+  },
+
+  async removeFirstOrderUse(phone) {
+    if (useSupabase()) {
+      const { error } = await supabase.from('customer_first_order_uses').delete().eq('phone_number', phone);
+      if (error) console.error('Error deleting first order use from Supabase:', error.message);
+      return;
+    }
+
+    const local = readLocalDB();
+    if (local.customer_first_order_uses) {
+      local.customer_first_order_uses = local.customer_first_order_uses.filter(u => u.phone_number !== phone);
+      writeLocalDB(local);
+    }
+  },
+
   async checkDiscountEligibility(phone, amount) {
     const settings = await this.getWebsiteSettings();
     const firstOrderEnabled = settings.first_order_discount_enabled !== false;
@@ -650,16 +710,25 @@ const db = {
     const firstOrderAmt = settings.first_order_discount_amount !== undefined ? parseFloat(settings.first_order_discount_amount) : 100;
 
     if (firstOrderEnabled) {
-      // Check previous completed orders
+      // 1. Check customer_first_order_uses table first
+      const useRecord = await this.getFirstOrderUseByPhone(phone);
+      if (useRecord && useRecord.first_order_discount_used) {
+        return { 
+          eligible: false, 
+          reason: 'First Order Offer has already been used for this phone number.' 
+        };
+      }
+
+      // 2. Check previous completed orders
       const orders = await this.getCompletedOrdersByPhone(phone);
       if (orders.length > 0) {
         return { 
           eligible: false, 
-          reason: 'First Order Offer has already been used.' 
+          reason: 'First Order Offer has already been used for this phone number.' 
         };
       }
 
-      // Verify minimum order amount
+      // 3. Verify minimum order amount
       if (amount < firstOrderMinVal) {
         return { 
           eligible: false, 
@@ -690,7 +759,7 @@ const db = {
 
     const orders = await this.getCompletedOrdersByPhone(phone);
     if (orders.length > 0) {
-      return { eligible: false, reason: 'First Order Offer has already been used.' };
+      return { eligible: false, reason: 'First Order Offer has already been used for this phone number.' };
     }
 
     if (amount < discount.minimum_order_amount) {
@@ -758,9 +827,11 @@ const db = {
     const firstOrderAmt = settings.first_order_discount_amount !== undefined ? parseFloat(settings.first_order_discount_amount) : 100;
 
     if (firstOrderEnabled) {
+      const useRecord = await this.getFirstOrderUseByPhone(order.customer_phone);
       const orders = await this.getCompletedOrdersByPhone(order.customer_phone);
-      if (orders.length > 0) {
-        firstOrderDiscountReason = 'First Order Offer has already been used.';
+      
+      if ((useRecord && useRecord.first_order_discount_used) || orders.length > 0) {
+        firstOrderDiscountReason = 'First Order Offer has already been used for this phone number.';
       } else if (finalAmount < firstOrderMinVal) {
         firstOrderDiscountReason = `Order subtotal (₹${finalAmount.toFixed(2)}) was below the minimum requirement of ₹${firstOrderMinVal.toFixed(2)}.`;
       } else {
@@ -817,6 +888,11 @@ const db = {
       });
     }
 
+    // Handle automatic first-order discount use recording
+    if (isFirstOrder && (newOrder.payment_status === 'Paid' || newOrder.order_status === 'Completed')) {
+      await this.markFirstOrderUse(newOrder.customer_phone, id);
+    }
+
     if (useSupabase()) {
       const { data, error } = await supabase.from('orders').insert([newOrder]).select().single();
       if (error) throw new Error(error.message);
@@ -831,9 +907,20 @@ const db = {
   },
 
   async updateOrderStatus(id, updates) {
-    // If order payment status is toggled, check if we need to mark discount used/active
+    const order = await this.getOrderById(id);
+    if (order && order.is_first_order) {
+      const paymentStatus = updates.payment_status || order.payment_status;
+      const orderStatus = updates.order_status || order.order_status;
+      
+      if (orderStatus === 'Cancelled' || paymentStatus === 'Failed') {
+        await this.removeFirstOrderUse(order.customer_phone);
+      } else if (paymentStatus === 'Paid' || orderStatus === 'Completed') {
+        await this.markFirstOrderUse(order.customer_phone, id);
+      }
+    }
+
+    // If order payment status is toggled, check if we need to mark manual discount used/active
     if (updates.payment_status || updates.order_status) {
-      const order = await this.getOrderById(id);
       if (order && order.discount_id) {
         if (updates.payment_status === 'Paid') {
           await this.updateDiscount(order.discount_id, {

@@ -198,7 +198,7 @@ export default function MenuPage({
         discount_id: discount ? discount.id : null,
         discount_amount: discountAmt,
         final_amount: finalAmt,
-        is_first_order: !!discount,
+        is_first_order: eligibilityResult?.eligible ? (eligibilityResult.isAutomaticFirstOrder ? true : !!discount) : false,
         payment_status: isSuccess ? 'Paid' : 'Failed',
         order_status: isSuccess ? 'Completed' : 'Pending'
       };

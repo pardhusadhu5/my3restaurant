@@ -130,27 +130,29 @@ export default function AdminDashboard({
   const exportFirstOrderHistoryToCSV = (filteredHistory) => {
     // CSV headers
     const headers = [
-      'Customer Name',
       'Phone Number',
+      'Discount Applied',
+      'First Order Discount Status',
       'Order ID',
       'Order Date',
+      'Customer Name',
       'Order Amount',
       'Discount Amount',
       'Final Amount',
-      'Status',
       'Reason'
     ];
 
     // Map filtered history to CSV rows
     const rows = filteredHistory.map(item => [
-      `"${(item.customer_name || '').replace(/"/g, '""')}"`,
       `"${(item.customer_phone || '').replace(/"/g, '""')}"`,
+      item.discount_amount > 0 ? 'Yes' : 'No',
+      item.is_first_order ? 'Used' : 'Not Used',
       `"${(item.id || '').replace(/"/g, '""')}"`,
       `"${new Date(item.created_at).toLocaleString()}"`,
+      `"${(item.customer_name || '').replace(/"/g, '""')}"`,
       item.original_amount,
       item.discount_amount,
       item.final_amount,
-      item.is_first_order ? 'Applied' : 'Not Eligible',
       `"${(item.first_order_discount_reason || '').replace(/"/g, '""')}"`
     ]);
 
@@ -2320,9 +2322,9 @@ export default function AdminDashboard({
                         <th className="py-2.5">Order ID</th>
                         <th className="py-2.5">Order Date</th>
                         <th className="py-2.5">Order Amount</th>
-                        <th className="py-2.5">Discount</th>
+                        <th className="py-2.5">Discount Applied</th>
+                        <th className="py-2.5">First Order Offer</th>
                         <th className="py-2.5">Final Amount</th>
-                        <th className="py-2.5">Status</th>
                         <th className="py-2.5">Reason</th>
                       </tr>
                     </thead>
@@ -2369,19 +2371,25 @@ export default function AdminDashboard({
                                 {new Date(o.created_at).toLocaleDateString()}
                               </td>
                               <td className="py-3 text-zinc-400 font-mono">₹{o.original_amount.toFixed(2)}</td>
-                              <td className="py-3 font-mono font-bold text-white">
-                                {o.discount_amount > 0 ? `-₹${o.discount_amount.toFixed(2)}` : '₹0.00'}
-                              </td>
-                              <td className="py-3 text-gold font-mono font-bold">₹{o.final_amount.toFixed(2)}</td>
                               <td className="py-3">
                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                                  isApplied 
+                                  o.discount_amount > 0 
                                     ? 'bg-green-500/10 border-green-500/20 text-green-400' 
                                     : 'bg-zinc-500/10 border-zinc-800 text-zinc-400'
                                 }`}>
-                                  {isApplied ? 'Applied' : 'Not Eligible'}
+                                  {o.discount_amount > 0 ? 'Yes' : 'No'}
                                 </span>
                               </td>
+                              <td className="py-3">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                                  isApplied 
+                                    ? 'bg-gold/10 border-gold/25 text-gold' 
+                                    : 'bg-zinc-500/10 border-zinc-800 text-zinc-400'
+                                }`}>
+                                  {isApplied ? 'Used' : 'Not Used'}
+                                </span>
+                              </td>
+                              <td className="py-3 text-gold font-mono font-bold">₹{o.final_amount.toFixed(2)}</td>
                               <td className="py-3 text-zinc-400 max-w-[200px] truncate" title={formattedReason}>
                                 {formattedReason}
                               </td>

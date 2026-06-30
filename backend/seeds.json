@@ -2317,5 +2317,6 @@
   ],
   "customers": [],
   "first_order_discounts": [],
-  "orders": []
+  "orders": [],
+  "customer_first_order_uses": []
 }
