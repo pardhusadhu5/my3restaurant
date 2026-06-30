@@ -86,6 +86,90 @@ export default function AdminDashboard({
   const [orderSearch, setOrderSearch] = useState('');
   const [orderFilter, setOrderFilter] = useState('All');
 
+  // Automatic First-Order Offer states
+  const [firstOrderSettings, setFirstOrderSettings] = useState({
+    enabled: websiteSettings?.first_order_discount_enabled !== false,
+    minAmount: websiteSettings?.first_order_min_amount !== undefined ? websiteSettings.first_order_min_amount : 250,
+    discountAmount: websiteSettings?.first_order_discount_amount !== undefined ? websiteSettings.first_order_discount_amount : 100
+  });
+
+  const [firstOrderHistorySearch, setFirstOrderHistorySearch] = useState('');
+  const [firstOrderHistoryStatus, setFirstOrderHistoryStatus] = useState('All');
+  const [firstOrderHistoryStartDate, setFirstOrderHistoryStartDate] = useState('');
+  const [firstOrderHistoryEndDate, setFirstOrderHistoryEndDate] = useState('');
+
+  // Sync settings when the websiteSettings prop updates
+  useEffect(() => {
+    if (websiteSettings) {
+      setFirstOrderSettings({
+        enabled: websiteSettings.first_order_discount_enabled !== false,
+        minAmount: websiteSettings.first_order_min_amount !== undefined ? websiteSettings.first_order_min_amount : 250,
+        discountAmount: websiteSettings.first_order_discount_amount !== undefined ? websiteSettings.first_order_discount_amount : 100
+      });
+    }
+  }, [websiteSettings]);
+
+  const handleFirstOrderSettingsSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setActionLoading(true);
+      await api.updateWebsiteSettings({
+        ...websiteSettings,
+        first_order_discount_enabled: firstOrderSettings.enabled,
+        first_order_min_amount: parseFloat(firstOrderSettings.minAmount),
+        first_order_discount_amount: parseFloat(firstOrderSettings.discountAmount)
+      });
+      triggerSuccess('First-Order Offer settings updated successfully!');
+    } catch (err) {
+      alert(err.message || 'Failed to update First-Order Offer settings');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const exportFirstOrderHistoryToCSV = (filteredHistory) => {
+    // CSV headers
+    const headers = [
+      'Customer Name',
+      'Phone Number',
+      'Order ID',
+      'Order Date',
+      'Order Amount',
+      'Discount Amount',
+      'Final Amount',
+      'Status',
+      'Reason'
+    ];
+
+    // Map filtered history to CSV rows
+    const rows = filteredHistory.map(item => [
+      `"${(item.customer_name || '').replace(/"/g, '""')}"`,
+      `"${(item.customer_phone || '').replace(/"/g, '""')}"`,
+      `"${(item.id || '').replace(/"/g, '""')}"`,
+      `"${new Date(item.created_at).toLocaleString()}"`,
+      item.original_amount,
+      item.discount_amount,
+      item.final_amount,
+      item.is_first_order ? 'Applied' : 'Not Eligible',
+      `"${(item.first_order_discount_reason || '').replace(/"/g, '""')}"`
+    ]);
+
+    // Combine headers and rows
+    const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+
+    // Create a Blob and trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `first_order_discount_history_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+
   // Handle mobile body scroll lock when sidebar is open
   useEffect(() => {
     if (isSidebarOpen) {
@@ -1820,6 +1904,57 @@ export default function AdminDashboard({
                 </div>
               </div>
 
+              {/* Automatic First-Order Offer Settings */}
+              <div className="glass-panel p-6 rounded-2xl">
+                <h3 className="text-sm font-bold text-white font-serif tracking-wide border-b border-zinc-900 pb-3 flex items-center space-x-2">
+                  <Gift className="text-gold" size={18} />
+                  <span>Automatic First-Order Offer Settings</span>
+                </h3>
+                <form onSubmit={handleFirstOrderSettingsSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end text-xs mt-4">
+                  <div>
+                    <label className="block text-zinc-500 mb-1">Offer Status</label>
+                    <select 
+                      value={firstOrderSettings.enabled ? 'true' : 'false'}
+                      onChange={(e) => setFirstOrderSettings(prev => ({ ...prev, enabled: e.target.value === 'true' }))}
+                      className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                    >
+                      <option value="true">Enabled (Apply automatically)</option>
+                      <option value="false">Disabled</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-zinc-500 mb-1">Minimum Order Value (₹)</label>
+                    <input 
+                      type="number"
+                      value={firstOrderSettings.minAmount}
+                      onChange={(e) => setFirstOrderSettings(prev => ({ ...prev, minAmount: parseFloat(e.target.value) || 0 }))}
+                      className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm font-mono"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-zinc-500 mb-1">Discount Amount (₹)</label>
+                    <input 
+                      type="number"
+                      value={firstOrderSettings.discountAmount}
+                      onChange={(e) => setFirstOrderSettings(prev => ({ ...prev, discountAmount: parseFloat(e.target.value) || 0 }))}
+                      className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm font-mono"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <button 
+                      type="submit"
+                      disabled={actionLoading}
+                      className="w-full py-2 bg-gold hover:bg-gold-light text-black text-xs font-bold rounded-xl transition h-[38px] flex items-center justify-center space-x-1"
+                    >
+                      <Save size={14} />
+                      <span>Save Settings</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
                 <div className="glass-panel p-6 rounded-2xl h-fit space-y-4">
@@ -2080,6 +2215,213 @@ export default function AdminDashboard({
                       </tbody>
                     </table>
                   </div>
+                </div>
+              </div>
+
+              {/* First-Order Discount History Panel */}
+              <div className="glass-panel p-6 rounded-2xl space-y-4">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-zinc-900 pb-3 gap-3">
+                  <div>
+                    <h3 className="text-sm font-bold text-white font-serif tracking-wide">First-Order Discount History</h3>
+                    <p className="text-[10px] text-zinc-500 mt-0.5">Monitor automatic eligibility checks, discounts applied, and reasons for ineligibility.</p>
+                  </div>
+                  
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    {/* Search name/phone */}
+                    <div className="relative">
+                      <span className="absolute inset-y-0 left-3 flex items-center text-zinc-500"><Search size={12} /></span>
+                      <input
+                        type="text"
+                        value={firstOrderHistorySearch}
+                        onChange={(e) => setFirstOrderHistorySearch(e.target.value)}
+                        placeholder="Search Name/Phone..."
+                        className="pl-8 pr-3 py-1.5 bg-zinc-900/60 border border-zinc-800 rounded-lg text-white w-40 focus:outline-none focus:border-gold/50"
+                      />
+                    </div>
+                    
+                    {/* Status filter */}
+                    <select
+                      value={firstOrderHistoryStatus}
+                      onChange={(e) => setFirstOrderHistoryStatus(e.target.value)}
+                      className="px-2 py-1.5 bg-zinc-900/60 border border-zinc-800 rounded-lg text-white focus:outline-none"
+                    >
+                      <option value="All">All Statuses</option>
+                      <option value="Applied">Applied</option>
+                      <option value="Not Eligible">Not Eligible</option>
+                    </select>
+
+                    {/* Date range filters */}
+                    <div className="flex items-center space-x-1">
+                      <input
+                        type="date"
+                        value={firstOrderHistoryStartDate}
+                        onChange={(e) => setFirstOrderHistoryStartDate(e.target.value)}
+                        className="px-2 py-1 bg-zinc-900/60 border border-zinc-800 rounded-lg text-white text-[11px] focus:outline-none font-mono"
+                        placeholder="Start Date"
+                      />
+                      <span className="text-zinc-500">-</span>
+                      <input
+                        type="date"
+                        value={firstOrderHistoryEndDate}
+                        onChange={(e) => setFirstOrderHistoryEndDate(e.target.value)}
+                        className="px-2 py-1 bg-zinc-900/60 border border-zinc-800 rounded-lg text-white text-[11px] focus:outline-none font-mono"
+                        placeholder="End Date"
+                      />
+                    </div>
+
+                    {/* CSV Export Button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const history = (orders || []).filter(o => {
+                          const term = firstOrderHistorySearch.trim().toLowerCase();
+                          const matchesSearch = !term || 
+                            (o.customer_name || '').toLowerCase().includes(term) || 
+                            (o.customer_phone || '').includes(term);
+
+                          const status = firstOrderHistoryStatus;
+                          const isApplied = o.is_first_order === true;
+                          const matchesStatus = status === 'All' || 
+                            (status === 'Applied' && isApplied) || 
+                            (status === 'Not Eligible' && !isApplied);
+
+                          let matchesDate = true;
+                          if (firstOrderHistoryStartDate) {
+                            const start = new Date(firstOrderHistoryStartDate);
+                            start.setHours(0, 0, 0, 0);
+                            const orderDate = new Date(o.created_at);
+                            if (orderDate < start) matchesDate = false;
+                          }
+                          if (firstOrderHistoryEndDate) {
+                            const end = new Date(firstOrderHistoryEndDate);
+                            end.setHours(23, 59, 59, 999);
+                            const orderDate = new Date(o.created_at);
+                            if (orderDate > end) matchesDate = false;
+                          }
+
+                          return matchesSearch && matchesStatus && matchesDate;
+                        });
+                        exportFirstOrderHistoryToCSV(history);
+                      }}
+                      className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold rounded-lg transition flex items-center space-x-1"
+                    >
+                      <Download size={12} />
+                      <span>Export CSV</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b border-zinc-900 text-zinc-500 font-semibold sticky top-0 bg-[#0c0d0f] z-10">
+                        <th className="py-2.5">Customer Name</th>
+                        <th className="py-2.5">Phone Number</th>
+                        <th className="py-2.5">Order ID</th>
+                        <th className="py-2.5">Order Date</th>
+                        <th className="py-2.5">Order Amount</th>
+                        <th className="py-2.5">Discount</th>
+                        <th className="py-2.5">Final Amount</th>
+                        <th className="py-2.5">Status</th>
+                        <th className="py-2.5">Reason</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(orders || [])
+                        .filter(o => {
+                          const term = firstOrderHistorySearch.trim().toLowerCase();
+                          const matchesSearch = !term || 
+                            (o.customer_name || '').toLowerCase().includes(term) || 
+                            (o.customer_phone || '').includes(term);
+
+                          const status = firstOrderHistoryStatus;
+                          const isApplied = o.is_first_order === true;
+                          const matchesStatus = status === 'All' || 
+                            (status === 'Applied' && isApplied) || 
+                            (status === 'Not Eligible' && !isApplied);
+
+                          let matchesDate = true;
+                          if (firstOrderHistoryStartDate) {
+                            const start = new Date(firstOrderHistoryStartDate);
+                            start.setHours(0, 0, 0, 0);
+                            const orderDate = new Date(o.created_at);
+                            if (orderDate < start) matchesDate = false;
+                          }
+                          if (firstOrderHistoryEndDate) {
+                            const end = new Date(firstOrderHistoryEndDate);
+                            end.setHours(23, 59, 59, 999);
+                            const orderDate = new Date(o.created_at);
+                            if (orderDate > end) matchesDate = false;
+                          }
+
+                          return matchesSearch && matchesStatus && matchesDate;
+                        })
+                        .map(o => {
+                          const isApplied = o.is_first_order === true;
+                          const formattedReason = o.first_order_discount_reason || (isApplied ? '🎉 First Order Offer Applied!' : 'N/A');
+                          
+                          return (
+                            <tr key={o.id} className="border-b border-zinc-900/40 hover:bg-zinc-900/10">
+                              <td className="py-3 font-semibold text-white">{o.customer_name}</td>
+                              <td className="py-3 text-zinc-400 font-mono">{o.customer_phone}</td>
+                              <td className="py-3 text-zinc-500 font-mono">{o.id}</td>
+                              <td className="py-3 text-zinc-400 font-mono">
+                                {new Date(o.created_at).toLocaleDateString()}
+                              </td>
+                              <td className="py-3 text-zinc-400 font-mono">₹{o.original_amount.toFixed(2)}</td>
+                              <td className="py-3 font-mono font-bold text-white">
+                                {o.discount_amount > 0 ? `-₹${o.discount_amount.toFixed(2)}` : '₹0.00'}
+                              </td>
+                              <td className="py-3 text-gold font-mono font-bold">₹{o.final_amount.toFixed(2)}</td>
+                              <td className="py-3">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                                  isApplied 
+                                    ? 'bg-green-500/10 border-green-500/20 text-green-400' 
+                                    : 'bg-zinc-500/10 border-zinc-800 text-zinc-400'
+                                }`}>
+                                  {isApplied ? 'Applied' : 'Not Eligible'}
+                                </span>
+                              </td>
+                              <td className="py-3 text-zinc-400 max-w-[200px] truncate" title={formattedReason}>
+                                {formattedReason}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      {(orders || []).filter(o => {
+                        const term = firstOrderHistorySearch.trim().toLowerCase();
+                        const matchesSearch = !term || 
+                          (o.customer_name || '').toLowerCase().includes(term) || 
+                          (o.customer_phone || '').includes(term);
+
+                        const status = firstOrderHistoryStatus;
+                        const isApplied = o.is_first_order === true;
+                        const matchesStatus = status === 'All' || 
+                          (status === 'Applied' && isApplied) || 
+                          (status === 'Not Eligible' && !isApplied);
+
+                        let matchesDate = true;
+                        if (firstOrderHistoryStartDate) {
+                          const start = new Date(firstOrderHistoryStartDate);
+                          start.setHours(0, 0, 0, 0);
+                          const orderDate = new Date(o.created_at);
+                          if (orderDate < start) matchesDate = false;
+                        }
+                        if (firstOrderHistoryEndDate) {
+                          const end = new Date(firstOrderHistoryEndDate);
+                          end.setHours(23, 59, 59, 999);
+                          const orderDate = new Date(o.created_at);
+                          if (orderDate > end) matchesDate = false;
+                        }
+
+                        return matchesSearch && matchesStatus && matchesDate;
+                      }).length === 0 && (
+                        <tr>
+                          <td colSpan="9" className="py-6 text-center text-zinc-600">No checkout history found.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>

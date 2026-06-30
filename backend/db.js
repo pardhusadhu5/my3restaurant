@@ -56,7 +56,13 @@ function initLocalDB() {
       // Fallback empty DB
       const targetHash = '2a72532749481a79c750aeb1a3179fdf91f8fbbd62246697dbc546be660a1d31';
       fs.writeFileSync(dbPath, JSON.stringify({
-        website_settings: { status: "online", theme: "dark" },
+        website_settings: { 
+          status: "online", 
+          theme: "dark",
+          first_order_discount_enabled: true,
+          first_order_min_amount: 250,
+          first_order_discount_amount: 100
+        },
         restaurant_settings: {},
         contact_information: {},
         hero_section: {},
@@ -86,9 +92,24 @@ function readLocalDB() {
       a.password === targetHash
     );
 
+    let needsWrite = false;
+
     if (!hasCorrectAdmin) {
       console.log('Updating local admin credentials to new hashed values...');
       ensureNewAdmin(local);
+      needsWrite = true;
+    }
+
+    // Auto-update website_settings if first-order configurations are missing
+    if (local.website_settings && local.website_settings.first_order_discount_enabled === undefined) {
+      console.log('Seeding automatic first-order discount configurations in local database...');
+      local.website_settings.first_order_discount_enabled = true;
+      local.website_settings.first_order_min_amount = 250;
+      local.website_settings.first_order_discount_amount = 100;
+      needsWrite = true;
+    }
+
+    if (needsWrite) {
       writeLocalDB(local);
     }
     
@@ -107,6 +128,7 @@ function writeLocalDB(data) {
     console.error('Error writing local db:', err.message);
   }
 }
+
 
 
 // Helper to generate UUID-like strings for local items
@@ -622,19 +644,55 @@ const db = {
   },
 
   async checkDiscountEligibility(phone, amount) {
-    // 1. Search for active discount
+    const settings = await this.getWebsiteSettings();
+    const firstOrderEnabled = settings.first_order_discount_enabled !== false;
+    const firstOrderMinVal = settings.first_order_min_amount !== undefined ? parseFloat(settings.first_order_min_amount) : 250;
+    const firstOrderAmt = settings.first_order_discount_amount !== undefined ? parseFloat(settings.first_order_discount_amount) : 100;
+
+    if (firstOrderEnabled) {
+      // Check previous completed orders
+      const orders = await this.getCompletedOrdersByPhone(phone);
+      if (orders.length > 0) {
+        return { 
+          eligible: false, 
+          reason: 'First Order Offer has already been used.' 
+        };
+      }
+
+      // Verify minimum order amount
+      if (amount < firstOrderMinVal) {
+        return { 
+          eligible: false, 
+          isBelowMinAmount: true,
+          minAmount: firstOrderMinVal,
+          currentAmount: amount,
+          reason: `Add ₹${(firstOrderMinVal - amount).toFixed(2)} more to unlock your ₹${firstOrderAmt} First Order Discount.`
+        };
+      }
+
+      // Calculate discount value (cannot exceed order total)
+      const discountAmount = Math.min(firstOrderAmt, amount);
+      return {
+        eligible: true,
+        isAutomaticFirstOrder: true,
+        discountAmount: parseFloat(discountAmount.toFixed(2)),
+        finalAmount: parseFloat((amount - discountAmount).toFixed(2)),
+        reason: `🎉 Congratulations! Your first order discount of ₹${firstOrderAmt} has been applied.`,
+        minAmount: firstOrderMinVal
+      };
+    }
+
+    // Fallback to manual discount system if the automatic first-order discount is disabled
     const discount = await this.getActiveDiscountByPhone(phone);
     if (!discount) {
       return { eligible: false, reason: 'No active discount assigned to this phone number.' };
     }
 
-    // 2. Check previous completed orders
     const orders = await this.getCompletedOrdersByPhone(phone);
     if (orders.length > 0) {
-      return { eligible: false, reason: 'First Order Discount has already been used.' };
+      return { eligible: false, reason: 'First Order Offer has already been used.' };
     }
 
-    // 3. Verify minimum order amount
     if (amount < discount.minimum_order_amount) {
       return { 
         eligible: false, 
@@ -643,7 +701,6 @@ const db = {
       };
     }
 
-    // Calculate dynamic discount value
     let discountAmount = 0;
     if (discount.discount_type === 'percentage') {
       discountAmount = (amount * discount.discount_value) / 100;
@@ -653,12 +710,14 @@ const db = {
     } else {
       discountAmount = discount.discount_value;
     }
+    discountAmount = Math.min(discountAmount, amount);
 
     return {
       eligible: true,
       discount,
       discountAmount: parseFloat(discountAmount.toFixed(2)),
-      finalAmount: parseFloat((amount - discountAmount).toFixed(2))
+      finalAmount: parseFloat((amount - discountAmount).toFixed(2)),
+      reason: '🎉 First-Time Discount Applied!'
     };
   },
 
@@ -686,6 +745,42 @@ const db = {
 
   async createOrder(order) {
     const id = 'ORD_' + Math.floor(100000 + Math.random() * 900000);
+    
+    // Server-side validation of discount eligibility
+    let discountAmount = 0;
+    let finalAmount = parseFloat(order.original_amount);
+    let isFirstOrder = false;
+    let firstOrderDiscountReason = '';
+
+    const settings = await this.getWebsiteSettings();
+    const firstOrderEnabled = settings.first_order_discount_enabled !== false;
+    const firstOrderMinVal = settings.first_order_min_amount !== undefined ? parseFloat(settings.first_order_min_amount) : 250;
+    const firstOrderAmt = settings.first_order_discount_amount !== undefined ? parseFloat(settings.first_order_discount_amount) : 100;
+
+    if (firstOrderEnabled) {
+      const orders = await this.getCompletedOrdersByPhone(order.customer_phone);
+      if (orders.length > 0) {
+        firstOrderDiscountReason = 'First Order Offer has already been used.';
+      } else if (finalAmount < firstOrderMinVal) {
+        firstOrderDiscountReason = `Order subtotal (₹${finalAmount.toFixed(2)}) was below the minimum requirement of ₹${firstOrderMinVal.toFixed(2)}.`;
+      } else {
+        discountAmount = Math.min(firstOrderAmt, finalAmount);
+        finalAmount -= discountAmount;
+        isFirstOrder = true;
+        firstOrderDiscountReason = '🎉 First Order Offer Applied!';
+      }
+    } else {
+      firstOrderDiscountReason = 'First Order Offer was disabled by admin.';
+      if (order.discount_id) {
+        // Verify manual discount
+        const eligibility = await this.checkDiscountEligibility(order.customer_phone, finalAmount);
+        if (eligibility.eligible && eligibility.discount && eligibility.discount.id === order.discount_id) {
+          discountAmount = eligibility.discountAmount;
+          finalAmount = eligibility.finalAmount;
+        }
+      }
+    }
+
     const newOrder = {
       id,
       customer_name: order.customer_name,
@@ -693,10 +788,11 @@ const db = {
       customer_email: order.customer_email || null,
       items: order.items,
       original_amount: parseFloat(order.original_amount),
-      discount_id: order.discount_id || null,
-      discount_amount: parseFloat(order.discount_amount) || 0,
-      final_amount: parseFloat(order.final_amount),
-      is_first_order: order.is_first_order === true,
+      discount_id: isFirstOrder ? null : (order.discount_id || null),
+      discount_amount: parseFloat(discountAmount),
+      final_amount: parseFloat(finalAmount),
+      is_first_order: isFirstOrder,
+      first_order_discount_reason: firstOrderDiscountReason,
       payment_status: order.payment_status || 'Pending',
       order_status: order.order_status || 'Pending',
       created_at: new Date().toISOString()

@@ -711,28 +711,40 @@ export default function MenuPage({
                   <div className={`border rounded-xl p-4 flex items-start space-x-3 text-xs ${
                     eligibilityResult.eligible 
                       ? 'bg-gold/5 border-gold/30 text-gold shadow-[0_0_15px_rgba(212,175,55,0.05)]' 
-                      : 'bg-zinc-900/40 border-zinc-800 text-zinc-400'
+                      : eligibilityResult.isBelowMinAmount
+                        ? 'bg-blue-500/10 border-blue-500/20 text-blue-400'
+                        : 'bg-red-500/10 border-red-500/20 text-red-400'
                   }`}>
                     {eligibilityResult.eligible ? (
                       <>
                         <Gift size={16} className="mt-0.5 flex-shrink-0 text-gold animate-pulse" />
                         <div>
-                          <p className="font-bold text-white mb-0.5">🎉 Discount Eligible!</p>
+                          <p className="font-bold text-white mb-0.5">
+                            {eligibilityResult.isAutomaticFirstOrder ? '🎉 Congratulations!' : '🎉 Discount Eligible!'}
+                          </p>
                           <p className="leading-relaxed">
-                            A first-time customer discount has been applied successfully. 
-                            Value: <span className="font-bold text-white">{
-                              eligibilityResult.discount.discount_type === 'percentage' 
-                                ? `${eligibilityResult.discount.discount_value}%` 
-                                : `₹${eligibilityResult.discount.discount_value}`
-                            } Off</span>
+                            {eligibilityResult.isAutomaticFirstOrder ? (
+                              `Your first order discount of ₹${eligibilityResult.discountAmount} has been applied.`
+                            ) : (
+                              <>
+                                A first-time customer discount has been applied successfully. 
+                                Value: <span className="font-bold text-white">{
+                                  eligibilityResult.discount?.discount_type === 'percentage' 
+                                    ? `${eligibilityResult.discount.discount_value}%` 
+                                    : `₹${eligibilityResult.discount.discount_value}`
+                                } Off</span>
+                              </>
+                            )}
                           </p>
                         </div>
                       </>
                     ) : (
                       <>
-                        <AlertCircle size={16} className="mt-0.5 flex-shrink-0 text-zinc-500" />
+                        <AlertCircle size={16} className={`mt-0.5 flex-shrink-0 ${eligibilityResult.isBelowMinAmount ? 'text-blue-400' : 'text-red-400'}`} />
                         <div>
-                          <p className="font-semibold text-zinc-300 mb-0.5">Discount Information</p>
+                          <p className="font-semibold text-white mb-0.5">
+                            {eligibilityResult.isBelowMinAmount ? 'First Order Offer' : 'Offer Status'}
+                          </p>
                           <p className="leading-relaxed">{eligibilityResult.reason}</p>
                         </div>
                       </>

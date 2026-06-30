@@ -9,6 +9,9 @@ CREATE TABLE IF NOT EXISTS website_settings (
     id SERIAL PRIMARY KEY,
     status TEXT NOT NULL DEFAULT 'online', -- 'online', 'maintenance'
     theme TEXT NOT NULL DEFAULT 'dark',
+    first_order_discount_enabled BOOLEAN DEFAULT true,
+    first_order_min_amount NUMERIC(10, 2) DEFAULT 250.00,
+    first_order_discount_amount NUMERIC(10, 2) DEFAULT 100.00,
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -383,7 +386,16 @@ CREATE TABLE IF NOT EXISTS orders (
     discount_amount NUMERIC(10, 2) DEFAULT 0,
     final_amount NUMERIC(10, 2) NOT NULL,
     is_first_order BOOLEAN DEFAULT false,
+    first_order_discount_reason TEXT,
     payment_status TEXT NOT NULL DEFAULT 'Pending', -- 'Pending', 'Paid', 'Failed'
     order_status TEXT NOT NULL DEFAULT 'Pending', -- 'Pending', 'Completed', 'Cancelled'
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Migrations (applied dynamically to existing tables if columns do not exist)
+ALTER TABLE website_settings ADD COLUMN IF NOT EXISTS first_order_discount_enabled BOOLEAN DEFAULT true;
+ALTER TABLE website_settings ADD COLUMN IF NOT EXISTS first_order_min_amount NUMERIC(10, 2) DEFAULT 250.00;
+ALTER TABLE website_settings ADD COLUMN IF NOT EXISTS first_order_discount_amount NUMERIC(10, 2) DEFAULT 100.00;
+
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS first_order_discount_reason TEXT;
+

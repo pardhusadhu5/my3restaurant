@@ -1,7 +1,10 @@
 {
   "website_settings": {
     "status": "online",
-    "theme": "dark"
+    "theme": "dark",
+    "first_order_discount_enabled": true,
+    "first_order_min_amount": 250,
+    "first_order_discount_amount": 100
   },
   "restaurant_settings": {
     "name": "MYTHRI \u2013 THE COMPLETE FAMILY RESTAURANT",
