@@ -446,6 +446,11 @@ export default function MenuPage({
               <div key={item.id} className="glass-panel rounded-2xl overflow-hidden glass-panel-hover flex flex-col group justify-between">
                 <div>
                   <div className="h-44 overflow-hidden relative bg-zinc-950">
+                    {item.is_popular && (
+                      <div className="absolute top-3 left-3 px-2 py-0.5 bg-gold text-black font-extrabold text-[9px] uppercase tracking-wider rounded-md border border-gold/30 shadow-lg z-10">
+                        Popular
+                      </div>
+                    )}
                     {item.image_url ? (
                       <img src={item.image_url} className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500" alt={item.name} />
                     ) : (

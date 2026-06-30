@@ -53,7 +53,7 @@ export default function AdminDashboard({
 
   // Forms states
   const [categoryForm, setCategoryForm] = useState({ name: '', display_order: 0, isEdit: false, id: null });
-  const [itemForm, setItemForm] = useState({ name: '', price: '', category_id: '', description: '', image_url: '', status: 'visible', display_order: 0, isEdit: false, id: null });
+  const [itemForm, setItemForm] = useState({ name: '', price: '', category_id: '', description: '', image_url: '', status: 'visible', is_popular: false, display_order: 0, isEdit: false, id: null });
   const [infoForm, setInfoForm] = useState({ ...restaurantSettings });
   const [contactForm, setContactForm] = useState({ ...contactInfo });
   const [heroForm, setHeroForm] = useState({ ...heroSection });
@@ -348,6 +348,7 @@ export default function AdminDashboard({
         description: itemForm.description,
         image_url: itemForm.image_url,
         status: itemForm.status,
+        is_popular: !!itemForm.is_popular,
         display_order: parseInt(itemForm.display_order) || 0
       };
 
@@ -361,7 +362,7 @@ export default function AdminDashboard({
         await api.createMenuItem(itemData);
         triggerSuccess('Menu item created!');
       }
-      setItemForm({ name: '', price: '', category_id: '', description: '', image_url: '', status: 'visible', display_order: 0, isEdit: false, id: null });
+      setItemForm({ name: '', price: '', category_id: '', description: '', image_url: '', status: 'visible', is_popular: false, display_order: 0, isEdit: false, id: null });
     } catch (err) {
       alert(err.message);
     } finally {
@@ -945,6 +946,19 @@ export default function AdminDashboard({
                       </div>
                     </div>
 
+                    <div className="flex items-center space-x-2 pt-1 pb-2">
+                      <input 
+                        type="checkbox"
+                        id="is_popular"
+                        checked={!!itemForm.is_popular}
+                        onChange={(e) => setItemForm(prev => ({ ...prev, is_popular: e.target.checked }))}
+                        className="rounded border-zinc-800 text-gold focus:ring-gold/50 bg-zinc-900/60 w-4 h-4 cursor-pointer"
+                      />
+                      <label htmlFor="is_popular" className="text-zinc-400 select-none cursor-pointer hover:text-white transition-colors">
+                        Mark as Popular / Featured Dish
+                      </label>
+                    </div>
+
 
 
                     <div className="flex space-x-2 pt-2">
@@ -1030,7 +1044,9 @@ export default function AdminDashboard({
                                 <div>
                                   <p className="font-semibold text-white flex items-center">
                                     <span>{item.name}</span>
-
+                                    {item.is_popular && (
+                                      <span className="ml-1.5 px-1 py-0.5 rounded bg-gold/10 border border-gold/20 text-gold text-[8px] font-bold uppercase">Popular</span>
+                                    )}
                                   </p>
                                   <p className="text-[10px] text-zinc-500 truncate max-w-xs">{item.description}</p>
                                 </div>

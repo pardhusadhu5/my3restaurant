@@ -118,86 +118,116 @@ export default function App() {
     }
   }, [route, isAdmin]);
 
-  // Set up Realtime Updates Listener
+  // BroadcastChannel for cross-tab realtime updates (same browser)
+  const realtimeChannel = React.useMemo(() => new BroadcastChannel('mythri_realtime_channel'), []);
+
+  const handleRealtimeUpdate = React.useCallback((type, data) => {
+    switch (type) {
+      case 'website_settings':
+        setWebsiteSettings(data);
+        break;
+      case 'restaurant_settings':
+        setRestaurantSettings(data);
+        break;
+      case 'contact_information':
+        setContactInfo(data);
+        break;
+      case 'hero_section':
+        setHeroSection(data);
+        break;
+      case 'qr_codes':
+        setQRCode(data);
+        break;
+      case 'menu_categories':
+        if (data.action === 'create') {
+          setCategories(prev => [...prev, data.category].sort((a, b) => a.display_order - b.display_order));
+        } else if (data.action === 'update') {
+          setCategories(prev => prev.map(c => c.id === data.category.id ? data.category : c).sort((a, b) => a.display_order - b.display_order));
+        } else if (data.action === 'delete') {
+          setCategories(prev => prev.filter(c => c.id !== data.id));
+          setMenuItems(prev => prev.filter(item => item.category_id !== data.id));
+        }
+        break;
+      case 'menu_items':
+        if (data.action === 'create') {
+          setMenuItems(prev => [...prev, data.item].sort((a, b) => a.display_order - b.display_order));
+        } else if (data.action === 'update') {
+          setMenuItems(prev => prev.map(item => item.id === data.item.id ? data.item : item).sort((a, b) => a.display_order - b.display_order));
+        } else if (data.action === 'delete') {
+          setMenuItems(prev => prev.filter(item => item.id !== data.id));
+        }
+        break;
+      case 'gallery_images':
+        if (data.action === 'create') {
+          setGallery(prev => [...prev, data.image].sort((a, b) => a.display_order - b.display_order));
+        } else if (data.action === 'delete') {
+          setGallery(prev => prev.filter(img => img.id !== data.id));
+        }
+        break;
+      case 'reviews':
+        if (data.action === 'create') {
+          setReviews(prev => [data.review, ...prev]);
+        } else if (data.action === 'update') {
+          setReviews(prev => prev.map(r => r.id === data.review.id ? data.review : r));
+        } else if (data.action === 'delete') {
+          setReviews(prev => prev.filter(r => r.id !== data.id));
+        }
+        break;
+      case 'first_order_discounts':
+        if (data.action === 'create') {
+          setDiscounts(prev => [data.discount, ...prev]);
+        } else if (data.action === 'update') {
+          setDiscounts(prev => prev.map(d => d.id === data.discount.id ? data.discount : d));
+        } else if (data.action === 'delete') {
+          setDiscounts(prev => prev.filter(d => d.id !== data.id));
+        }
+        break;
+      case 'orders':
+        if (data.action === 'create') {
+          setOrders(prev => [data.order, ...prev]);
+        } else if (data.action === 'update') {
+          setOrders(prev => prev.map(o => o.id === data.order.id ? data.order : o));
+        }
+        break;
+      default:
+        break;
+    }
+  }, []);
+
+  // Listen to BroadcastChannel updates
+  useEffect(() => {
+    const handleChannelMessage = (event) => {
+      const { type, data } = event.data;
+      console.log('BroadcastChannel message received:', type, data);
+      handleRealtimeUpdate(type, data);
+    };
+    realtimeChannel.addEventListener('message', handleChannelMessage);
+    return () => {
+      realtimeChannel.removeEventListener('message', handleChannelMessage);
+    };
+  }, [realtimeChannel, handleRealtimeUpdate]);
+
+  // Set up Realtime Updates Listener (SSE)
   useEffect(() => {
     const unsubscribe = api.subscribeToRealtime((payload) => {
       const { type, data } = payload;
-      console.log('Realtime Update Received:', type, data);
+      console.log('Realtime Update Received via SSE:', type, data);
+      
+      // Update local state
+      handleRealtimeUpdate(type, data);
 
-      switch (type) {
-        case 'website_settings':
-          setWebsiteSettings(data);
-          break;
-        case 'restaurant_settings':
-          setRestaurantSettings(data);
-          break;
-        case 'contact_information':
-          setContactInfo(data);
-          break;
-        case 'hero_section':
-          setHeroSection(data);
-          break;
-        case 'qr_codes':
-          setQRCode(data);
-          break;
-        case 'menu_categories':
-          if (data.action === 'create') {
-            setCategories(prev => [...prev, data.category].sort((a, b) => a.display_order - b.display_order));
-          } else if (data.action === 'update') {
-            setCategories(prev => prev.map(c => c.id === data.category.id ? data.category : c).sort((a, b) => a.display_order - b.display_order));
-          } else if (data.action === 'delete') {
-            setCategories(prev => prev.filter(c => c.id !== data.id));
-            setMenuItems(prev => prev.filter(item => item.category_id !== data.id));
-          }
-          break;
-        case 'menu_items':
-          if (data.action === 'create') {
-            setMenuItems(prev => [...prev, data.item].sort((a, b) => a.display_order - b.display_order));
-          } else if (data.action === 'update') {
-            setMenuItems(prev => prev.map(item => item.id === data.item.id ? data.item : item).sort((a, b) => a.display_order - b.display_order));
-          } else if (data.action === 'delete') {
-            setMenuItems(prev => prev.filter(item => item.id !== data.id));
-          }
-          break;
-        case 'gallery_images':
-          if (data.action === 'create') {
-            setGallery(prev => [...prev, data.image].sort((a, b) => a.display_order - b.display_order));
-          } else if (data.action === 'delete') {
-            setGallery(prev => prev.filter(img => img.id !== data.id));
-          }
-          break;
-        case 'reviews':
-          if (data.action === 'create') {
-            setReviews(prev => [data.review, ...prev]);
-          } else if (data.action === 'update') {
-            setReviews(prev => prev.map(r => r.id === data.review.id ? data.review : r));
-          } else if (data.action === 'delete') {
-            setReviews(prev => prev.filter(r => r.id !== data.id));
-          }
-          break;
-        case 'first_order_discounts':
-          if (data.action === 'create') {
-            setDiscounts(prev => [data.discount, ...prev]);
-          } else if (data.action === 'update') {
-            setDiscounts(prev => prev.map(d => d.id === data.discount.id ? data.discount : d));
-          } else if (data.action === 'delete') {
-            setDiscounts(prev => prev.filter(d => d.id !== data.id));
-          }
-          break;
-        case 'orders':
-          if (data.action === 'create') {
-            setOrders(prev => [data.order, ...prev]);
-          } else if (data.action === 'update') {
-            setOrders(prev => prev.map(o => o.id === data.order.id ? data.order : o));
-          }
-          break;
-        default:
-          break;
+      // Broadcast to other tabs of the same browser
+      try {
+        realtimeChannel.postMessage({ type, data });
+      } catch (err) {
+        console.error('Error posting to BroadcastChannel:', err);
       }
     });
 
-    return () => unsubscribe();
-  }, []);
+    return () => {
+      unsubscribe();
+    };
+  }, [realtimeChannel, handleRealtimeUpdate]);
 
   const handleLogin = async (user, token) => {
     localStorage.setItem('mythri_admin_token', token);
