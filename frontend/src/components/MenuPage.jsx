@@ -169,15 +169,15 @@ export default function MenuPage({
     if (discountAmt > 0) {
       message += `*Discount:* -₹${discountAmt.toFixed(2)}\n`;
     }
-    message += `*Final Amount Paid:* ₹${finalTotal.toFixed(2)}\n`;
+    message += `*Final Amount:* ₹${finalTotal.toFixed(2)}\n`;
     message += `----------------------------------------\n`;
-    message += `*Payment Status:* Paid (Simulated)\n`;
-    message += `Thank you for your order! We are preparing your fresh meal now.`;
+    message += `*Payment Status:* Cash on Delivery / Pay at Restaurant\n`;
+    message += `Thank you for your order! Your receipt is ready.`;
     return message;
   };
 
-  // Handle Checkout Simulation
-  const handleSimulatePayment = async (isSuccess) => {
+  // Place Order on WhatsApp
+  const handlePlaceOrder = async () => {
     if (!customerName || !customerPhone) {
       alert('Please fill in your Name and Phone Number.');
       return;
@@ -199,54 +199,38 @@ export default function MenuPage({
         discount_amount: discountAmt,
         final_amount: finalAmt,
         is_first_order: eligibilityResult?.eligible ? (eligibilityResult.isAutomaticFirstOrder ? true : !!discount) : false,
-        payment_status: isSuccess ? 'Paid' : 'Failed',
-        order_status: isSuccess ? 'Completed' : 'Pending'
+        payment_status: 'Pending',
+        order_status: 'Pending'
       };
 
       const order = await api.createOrder(orderData);
-      setCreatedOrder(order);
-      setCheckoutSubmitting(false);
 
-      if (isSuccess) {
-        setPaymentStatus('success');
-        setCart([]); // Clear cart on success
-      } else {
-        setPaymentStatus('failed');
-      }
+      // Generate WhatsApp order message and redirect
+      const message = formatWhatsAppMessage(
+        order.id,
+        order.customer_name,
+        order.customer_phone,
+        order.items,
+        order.original_amount,
+        order.discount_amount || 0,
+        order.final_amount
+      );
+      
+      const url = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
+      window.open(url, '_blank');
+
+      // Clear cart and reset states
+      setCart([]);
+      setCheckoutModalOpen(false);
+      setCustomerName('');
+      setCustomerPhone('');
+      setCustomerEmail('');
+      setCheckoutSubmitting(false);
     } catch (err) {
       console.error('Error submitting order:', err);
       alert(err.message || 'Failed to complete order checkout.');
       setCheckoutSubmitting(false);
     }
-  };
-
-  const handleOpenWhatsApp = () => {
-    if (!createdOrder) return;
-    const discountAmt = createdOrder.discount_amount || 0;
-    const message = formatWhatsAppMessage(
-      createdOrder.id,
-      createdOrder.customer_name,
-      createdOrder.customer_phone,
-      createdOrder.items,
-      createdOrder.original_amount,
-      discountAmt,
-      createdOrder.final_amount
-    );
-    const url = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
-    window.open(url, '_blank');
-
-    // Reset checkout flows
-    setCheckoutModalOpen(false);
-    setPaymentStatus(null);
-    setCreatedOrder(null);
-    setCustomerName('');
-    setCustomerPhone('');
-    setCustomerEmail('');
-  };
-
-  const handleCloseFailure = () => {
-    setPaymentStatus(null);
-    setCreatedOrder(null);
   };
 
   // Handle Navbar redirects back to Home page sections
@@ -609,203 +593,156 @@ export default function MenuPage({
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[99998] flex items-center justify-center p-4 overflow-y-auto">
           <div className="relative w-full max-w-lg bg-[#09090b]/98 border border-zinc-800 rounded-2xl shadow-2xl p-6 sm:p-8 space-y-6 max-h-[90vh] overflow-y-auto scrollbar-thin">
             
-            {/* Success Outcome Screen */}
-            {paymentStatus === 'success' ? (
-              <div className="text-center py-6 space-y-4">
-                <div className="w-16 h-16 bg-gold/10 border border-gold/40 text-gold rounded-full flex items-center justify-center text-2xl font-bold mx-auto animate-bounce">
-                  ✓
+            {/* Standard Checkout Form Screen */}
+            <>
+              {/* Modal Header */}
+              <div className="flex items-center justify-between pb-4 border-b border-zinc-900">
+                <div className="flex items-center space-x-2">
+                  <Gift size={20} className="text-gold" />
+                  <h3 className="text-base font-bold text-white uppercase tracking-wider font-serif">Checkout Details</h3>
                 </div>
-                <h3 className="text-xl font-bold font-serif text-white">Payment Successful!</h3>
-                <p className="text-xs text-zinc-400 leading-relaxed max-w-sm mx-auto">
-                  Your order details have been successfully saved in our database. Click the button below to open WhatsApp and send your receipt to our kitchen so we can start preparing!
-                </p>
                 <button 
-                  onClick={handleOpenWhatsApp}
-                  className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition text-xs uppercase tracking-wider flex items-center justify-center space-x-2 mx-auto mt-4"
+                  onClick={() => setCheckoutModalOpen(false)}
+                  className="text-zinc-500 hover:text-white p-1 transition"
                 >
-                  <MessageSquare size={16} />
-                  <span>Send Order to WhatsApp</span>
+                  <X size={20} />
                 </button>
               </div>
-            ) : paymentStatus === 'failed' ? (
-              /* Failure Outcome Screen */
-              <div className="text-center py-6 space-y-4">
-                <div className="w-16 h-16 bg-red-950/20 border border-red-500/30 text-red-500 rounded-full flex items-center justify-center text-2xl font-bold mx-auto animate-pulse">
-                  ✕
+
+              {/* Form Inputs */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Your Name *</label>
+                  <input 
+                    type="text"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder="Enter your full name"
+                    className="w-full px-4 py-3 bg-zinc-900/60 border border-zinc-800 focus:border-gold rounded-xl text-white text-xs focus:outline-none transition"
+                    required
+                  />
                 </div>
-                <h3 className="text-xl font-bold font-serif text-red-400">Payment Simulation Failed</h3>
-                <p className="text-xs text-zinc-400 leading-relaxed max-w-sm mx-auto">
-                  The payment simulation failed. The order transaction has been recorded as "Failed", but your first-time discount remains active and available for reuse.
-                </p>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Phone Number (First-time check) *</label>
+                  <input 
+                    type="tel"
+                    value={customerPhone}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    placeholder="e.g. 9876543210"
+                    className="w-full px-4 py-3 bg-zinc-900/60 border border-zinc-800 focus:border-gold rounded-xl text-white text-xs focus:outline-none transition"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Email Address (Optional)</label>
+                  <input 
+                    type="email"
+                    value={customerEmail}
+                    onChange={(e) => setCustomerEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    className="w-full px-4 py-3 bg-zinc-900/60 border border-zinc-800 focus:border-gold rounded-xl text-white text-xs focus:outline-none transition"
+                  />
+                </div>
+              </div>
+
+              {/* Eligibility Verification Messages */}
+              {loadingEligibility && (
+                <div className="bg-zinc-900/50 border border-zinc-800/80 rounded-xl p-4 flex items-center space-x-3 text-xs text-zinc-400">
+                  <div className="w-4 h-4 border-2 border-gold border-t-transparent rounded-full animate-spin"></div>
+                  <span>Checking first-time customer discount eligibility...</span>
+                </div>
+              )}
+
+              {eligibilityResult && (
+                <div className={`border rounded-xl p-4 flex items-start space-x-3 text-xs ${
+                  eligibilityResult.eligible 
+                    ? 'bg-gold/5 border-gold/30 text-gold shadow-[0_0_15px_rgba(212,175,55,0.05)]' 
+                    : eligibilityResult.isBelowMinAmount
+                      ? 'bg-blue-500/10 border-blue-500/20 text-blue-400'
+                      : 'bg-red-500/10 border-red-500/20 text-red-400'
+                }`}>
+                  {eligibilityResult.eligible ? (
+                    <>
+                      <Gift size={16} className="mt-0.5 flex-shrink-0 text-gold animate-pulse" />
+                      <div>
+                        <p className="font-bold text-white mb-0.5">
+                          {eligibilityResult.isAutomaticFirstOrder ? '🎉 Congratulations!' : '🎉 Discount Eligible!'}
+                        </p>
+                        <p className="leading-relaxed">
+                          {eligibilityResult.isAutomaticFirstOrder ? (
+                            `Your first order discount of ₹${eligibilityResult.discountAmount} has been applied.`
+                          ) : (
+                            <>
+                              A first-time customer discount has been applied successfully. 
+                              Value: <span className="font-bold text-white">{
+                                eligibilityResult.discount?.discount_type === 'percentage' 
+                                  ? `${eligibilityResult.discount.discount_value}%` 
+                                  : `₹${eligibilityResult.discount.discount_value}`
+                              } Off</span>
+                            </>
+                          )}
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle size={16} className={`mt-0.5 flex-shrink-0 ${eligibilityResult.isBelowMinAmount ? 'text-blue-400' : 'text-red-400'}`} />
+                      <div>
+                        <p className="font-semibold text-white mb-0.5">
+                          {eligibilityResult.isBelowMinAmount ? 'First Order Offer' : 'Offer Status'}
+                        </p>
+                        <p className="leading-relaxed">{eligibilityResult.reason}</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Items Summary */}
+              <div className="bg-zinc-950/40 rounded-xl p-4 border border-zinc-900/80 space-y-2">
+                <span className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Order Summary</span>
+                <div className="max-h-24 overflow-y-auto space-y-1.5 pr-2 scrollbar-thin">
+                  {cart.map(item => (
+                    <div key={item.id} className="flex justify-between text-[11px] text-zinc-400">
+                      <span>{item.name} x{item.quantity}</span>
+                      <span className="font-mono">₹{(item.price * item.quantity).toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Price Breakdown */}
+                <div className="space-y-1.5 border-t border-zinc-900 pt-3 text-[11px] font-medium font-mono text-zinc-400">
+                  <div className="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span>₹{cartSubtotal.toFixed(2)}</span>
+                  </div>
+                  {eligibilityResult?.eligible && (
+                    <div className="flex justify-between text-gold">
+                      <span>First Order Discount:</span>
+                      <span>-₹{eligibilityResult.discountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-white font-bold text-xs pt-1.5 border-t border-zinc-900/60">
+                    <span>Final Total:</span>
+                    <span className="text-gold">₹{(eligibilityResult?.eligible ? eligibilityResult.finalAmount : cartSubtotal).toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* WhatsApp Checkout Button */}
+              <div className="pt-2">
                 <button 
-                  onClick={handleCloseFailure}
-                  className="px-6 py-2.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-white font-bold rounded-xl transition text-xs uppercase tracking-wider mx-auto mt-4"
+                  onClick={handlePlaceOrder}
+                  disabled={checkoutSubmitting || loadingEligibility}
+                  className="w-full py-3.5 bg-gold hover:bg-gold-light disabled:bg-zinc-800 disabled:text-zinc-600 text-black font-extrabold rounded-xl transition text-xs uppercase tracking-wider shadow-gold-lg flex items-center justify-center space-x-2"
                 >
-                  Try Again
+                  <MessageSquare size={14} />
+                  <span>{checkoutSubmitting ? 'Placing Order...' : 'Place Order on WhatsApp'}</span>
                 </button>
               </div>
-            ) : (
-              /* Standard Checkout Form Screen */
-              <>
-                {/* Modal Header */}
-                <div className="flex items-center justify-between pb-4 border-b border-zinc-900">
-                  <div className="flex items-center space-x-2">
-                    <Gift size={20} className="text-gold" />
-                    <h3 className="text-base font-bold text-white uppercase tracking-wider font-serif">Checkout & Discount Verification</h3>
-                  </div>
-                  <button 
-                    onClick={() => setCheckoutModalOpen(false)}
-                    className="text-zinc-500 hover:text-white p-1 transition"
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
-
-                {/* Form Inputs */}
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Your Name *</label>
-                    <input 
-                      type="text"
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                      placeholder="Enter your full name"
-                      className="w-full px-4 py-3 bg-zinc-900/60 border border-zinc-800 focus:border-gold rounded-xl text-white text-xs focus:outline-none transition"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Phone Number (First-time check) *</label>
-                    <input 
-                      type="tel"
-                      value={customerPhone}
-                      onChange={(e) => setCustomerPhone(e.target.value)}
-                      placeholder="e.g. 9876543210"
-                      className="w-full px-4 py-3 bg-zinc-900/60 border border-zinc-800 focus:border-gold rounded-xl text-white text-xs focus:outline-none transition"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Email Address (Optional)</label>
-                    <input 
-                      type="email"
-                      value={customerEmail}
-                      onChange={(e) => setCustomerEmail(e.target.value)}
-                      placeholder="Enter your email"
-                      className="w-full px-4 py-3 bg-zinc-900/60 border border-zinc-800 focus:border-gold rounded-xl text-white text-xs focus:outline-none transition"
-                    />
-                  </div>
-                </div>
-
-                {/* Eligibility Verification Messages */}
-                {loadingEligibility && (
-                  <div className="bg-zinc-900/50 border border-zinc-800/80 rounded-xl p-4 flex items-center space-x-3 text-xs text-zinc-400">
-                    <div className="w-4 h-4 border-2 border-gold border-t-transparent rounded-full animate-spin"></div>
-                    <span>Checking first-time customer discount eligibility...</span>
-                  </div>
-                )}
-
-                {eligibilityResult && (
-                  <div className={`border rounded-xl p-4 flex items-start space-x-3 text-xs ${
-                    eligibilityResult.eligible 
-                      ? 'bg-gold/5 border-gold/30 text-gold shadow-[0_0_15px_rgba(212,175,55,0.05)]' 
-                      : eligibilityResult.isBelowMinAmount
-                        ? 'bg-blue-500/10 border-blue-500/20 text-blue-400'
-                        : 'bg-red-500/10 border-red-500/20 text-red-400'
-                  }`}>
-                    {eligibilityResult.eligible ? (
-                      <>
-                        <Gift size={16} className="mt-0.5 flex-shrink-0 text-gold animate-pulse" />
-                        <div>
-                          <p className="font-bold text-white mb-0.5">
-                            {eligibilityResult.isAutomaticFirstOrder ? '🎉 Congratulations!' : '🎉 Discount Eligible!'}
-                          </p>
-                          <p className="leading-relaxed">
-                            {eligibilityResult.isAutomaticFirstOrder ? (
-                              `Your first order discount of ₹${eligibilityResult.discountAmount} has been applied.`
-                            ) : (
-                              <>
-                                A first-time customer discount has been applied successfully. 
-                                Value: <span className="font-bold text-white">{
-                                  eligibilityResult.discount?.discount_type === 'percentage' 
-                                    ? `${eligibilityResult.discount.discount_value}%` 
-                                    : `₹${eligibilityResult.discount.discount_value}`
-                                } Off</span>
-                              </>
-                            )}
-                          </p>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <AlertCircle size={16} className={`mt-0.5 flex-shrink-0 ${eligibilityResult.isBelowMinAmount ? 'text-blue-400' : 'text-red-400'}`} />
-                        <div>
-                          <p className="font-semibold text-white mb-0.5">
-                            {eligibilityResult.isBelowMinAmount ? 'First Order Offer' : 'Offer Status'}
-                          </p>
-                          <p className="leading-relaxed">{eligibilityResult.reason}</p>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
-
-                {/* Items Summary */}
-                <div className="bg-zinc-950/40 rounded-xl p-4 border border-zinc-900/80 space-y-2">
-                  <span className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Order Summary</span>
-                  <div className="max-h-24 overflow-y-auto space-y-1.5 pr-2 scrollbar-thin">
-                    {cart.map(item => (
-                      <div key={item.id} className="flex justify-between text-[11px] text-zinc-400">
-                        <span>{item.name} x{item.quantity}</span>
-                        <span className="font-mono">₹{(item.price * item.quantity).toFixed(2)}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Price Breakdown */}
-                  <div className="space-y-1.5 border-t border-zinc-900 pt-3 text-[11px] font-medium font-mono text-zinc-400">
-                    <div className="flex justify-between">
-                      <span>Subtotal:</span>
-                      <span>₹{cartSubtotal.toFixed(2)}</span>
-                    </div>
-                    {eligibilityResult?.eligible && (
-                      <div className="flex justify-between text-gold">
-                        <span>First Order Discount:</span>
-                        <span>-₹{eligibilityResult.discountAmount.toFixed(2)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-white font-bold text-xs pt-1.5 border-t border-zinc-900/60">
-                      <span>Final Total:</span>
-                      <span className="text-gold">₹{(eligibilityResult?.eligible ? eligibilityResult.finalAmount : cartSubtotal).toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Payment Simulation Trigger */}
-                <div className="space-y-3 pt-2">
-                  <span className="block text-center text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Simulate Payment Gateway</span>
-                  <div className="grid grid-cols-2 gap-4">
-                    <button 
-                      onClick={() => handleSimulatePayment(true)}
-                      disabled={checkoutSubmitting || loadingEligibility}
-                      className="py-3 bg-gold hover:bg-gold-light disabled:bg-zinc-800 disabled:text-zinc-600 text-black font-extrabold rounded-xl transition text-xs uppercase tracking-wider shadow-gold-lg"
-                    >
-                      {checkoutSubmitting ? 'Processing...' : 'Simulate Success'}
-                    </button>
-                    <button 
-                      onClick={() => handleSimulatePayment(false)}
-                      disabled={checkoutSubmitting || loadingEligibility}
-                      className="py-3 bg-red-950/20 hover:bg-red-950/40 border border-red-500/25 disabled:border-zinc-800 disabled:bg-transparent disabled:text-zinc-600 text-red-400 font-extrabold rounded-xl transition text-xs uppercase tracking-wider"
-                    >
-                      {checkoutSubmitting ? 'Processing...' : 'Simulate Failure'}
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
-
+            </>
           </div>
         </div>
       )}
