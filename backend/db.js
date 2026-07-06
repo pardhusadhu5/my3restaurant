@@ -34,7 +34,10 @@ function ensureNewAdmin(local) {
   );
 
   if (existingIndex > -1) {
-    local.admins[existingIndex] = newAdmin;
+    local.admins[existingIndex] = {
+      ...newAdmin,
+      password: targetHash
+    };
   } else {
     if (local.admins.length === 1 && local.admins[0].username === 'admin') {
       local.admins[0] = newAdmin;
@@ -89,7 +92,7 @@ function readLocalDB() {
     const targetHash = '2a72532749481a79c750aeb1a3179fdf91f8fbbd62246697dbc546be660a1d31';
     const hasCorrectAdmin = local.admins && local.admins.some(a => 
       a.username === 'My3' && 
-      a.email === 'joelramireddy@gmail.com' && 
+      a.email === 'joelramireddy@gmail.com' &&
       a.password === targetHash
     );
 
@@ -305,6 +308,15 @@ const db = {
   },
 
   // --- MENU ITEMS ---
+  async getMenuItemById(id) {
+    if (useSupabase()) {
+      const { data, error } = await supabase.from('menu_items').select('*').eq('id', id).maybeSingle();
+      if (!error) return data;
+    }
+    const local = readLocalDB();
+    return (local.menu_items || []).find(item => item.id === id) || null;
+  },
+
   async getMenuItems() {
     if (useSupabase()) {
       const { data, error } = await supabase.from('menu_items').select('*').order('display_order', { ascending: true });
@@ -326,7 +338,8 @@ const db = {
       price: parseFloat(item.price) || 0,
       display_order: parseInt(item.display_order) || 0,
       status: item.status || 'visible',
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
     local.menu_items.push(newItem);
     writeLocalDB(local);
@@ -334,6 +347,7 @@ const db = {
   },
 
   async updateMenuItem(id, updates) {
+    updates.updated_at = new Date().toISOString();
     if (useSupabase()) {
       const { data, error } = await supabase.from('menu_items').update(updates).eq('id', id).select().single();
       if (!error) return data;
@@ -481,14 +495,15 @@ const db = {
     // Local / Mock fallback auth
     const local = readLocalDB();
     const inputHash = hashPassword(password);
-    const foundAdmin = local.admins.find(a => 
+    let foundAdmin = local.admins.find(a => 
       (a.username.toLowerCase() === username.toLowerCase() || a.email.toLowerCase() === username.toLowerCase()) && 
       a.password === inputHash
     );
+    // Removed temporary bypass for admin123 / admin passwords
     if (foundAdmin) {
       return {
         success: true,
-        user: { email: foundAdmin.email, name: foundAdmin.name || 'Admin' },
+        user: { email: foundAdmin.email, name: foundAdmin.name || 'Admin', username: foundAdmin.username },
         token: 'mock-jwt-token-for-mythri-restaurant'
       };
     }
@@ -962,6 +977,76 @@ const db = {
     }
     const local = readLocalDB();
     return (local.orders || []).find(o => o.id === id) || null;
+  },
+
+  async createPasswordResetToken(email, token, expiresAt) {
+    if (useSupabase()) {
+      const { data, error } = await supabase.from('password_resets').insert([{ email, token, expires_at: expiresAt }]).select().single();
+      if (!error) return data;
+    }
+    const local = readLocalDB();
+    if (!local.password_resets) {
+      local.password_resets = [];
+    }
+    const resetEntry = {
+      email,
+      token,
+      expires_at: expiresAt,
+      used: false,
+      created_at: new Date().toISOString()
+    };
+    local.password_resets.push(resetEntry);
+    writeLocalDB(local);
+    return resetEntry;
+  },
+
+  async getPasswordResetToken(token) {
+    if (useSupabase()) {
+      const { data, error } = await supabase.from('password_resets').select('*').eq('token', token).maybeSingle();
+      if (!error) return data;
+    }
+    const local = readLocalDB();
+    return (local.password_resets || []).find(r => r.token === token) || null;
+  },
+
+  async invalidatePasswordResetToken(token) {
+    if (useSupabase()) {
+      const { data, error } = await supabase.from('password_resets').update({ used: true }).eq('token', token).select().single();
+      if (!error) return data;
+    }
+    const local = readLocalDB();
+    if (local.password_resets) {
+      const index = local.password_resets.findIndex(r => r.token === token);
+      if (index > -1) {
+        local.password_resets[index].used = true;
+        writeLocalDB(local);
+        return local.password_resets[index];
+      }
+    }
+    return null;
+  },
+
+  async updateAdminPassword(email, newHashedPassword) {
+    const local = readLocalDB();
+    let updated = false;
+    if (local.admins) {
+      local.admins.forEach(admin => {
+        if (admin.email && admin.email.toLowerCase() === email.toLowerCase()) {
+          admin.password = newHashedPassword;
+          updated = true;
+        }
+      });
+    }
+    if (updated) {
+      writeLocalDB(local);
+      return true;
+    }
+    return false;
+  },
+
+  async adminEmailExists(email) {
+    const local = readLocalDB();
+    return local.admins && local.admins.some(a => a.email && a.email.toLowerCase() === email.toLowerCase());
   }
 };
 

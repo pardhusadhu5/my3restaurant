@@ -359,6 +359,42 @@ export const api = {
     return () => {
       eventSource.close();
     };
+  },
+
+  // Forgot/Reset Password
+  async forgotPassword(email) {
+    const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to request password reset');
+    }
+    return res.json();
+  },
+
+  async validateResetToken(token) {
+    const res = await fetch(`${API_BASE}/auth/validate-reset-token?token=${encodeURIComponent(token)}`);
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Invalid reset token');
+    }
+    return res.json();
+  },
+
+  async resetPassword(token, password) {
+    const res = await fetch(`${API_BASE}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, password })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to reset password');
+    }
+    return res.json();
   }
 };
 export default api;

@@ -3,6 +3,7 @@ import { api } from './services/api';
 import CustomerSite from './components/CustomerSite';
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
+import ResetPassword from './components/ResetPassword';
 import MenuPage from './components/MenuPage';
 
 export default function App() {
@@ -140,7 +141,10 @@ export default function App() {
         break;
       case 'menu_categories':
         if (data.action === 'create') {
-          setCategories(prev => [...prev, data.category].sort((a, b) => a.display_order - b.display_order));
+          setCategories(prev => {
+            if (prev.some(c => c.id === data.category.id)) return prev;
+            return [...prev, data.category].sort((a, b) => a.display_order - b.display_order);
+          });
         } else if (data.action === 'update') {
           setCategories(prev => prev.map(c => c.id === data.category.id ? data.category : c).sort((a, b) => a.display_order - b.display_order));
         } else if (data.action === 'delete') {
@@ -150,7 +154,10 @@ export default function App() {
         break;
       case 'menu_items':
         if (data.action === 'create') {
-          setMenuItems(prev => [...prev, data.item].sort((a, b) => a.display_order - b.display_order));
+          setMenuItems(prev => {
+            if (prev.some(item => item.id === data.item.id)) return prev;
+            return [...prev, data.item].sort((a, b) => a.display_order - b.display_order);
+          });
         } else if (data.action === 'update') {
           setMenuItems(prev => prev.map(item => item.id === data.item.id ? data.item : item).sort((a, b) => a.display_order - b.display_order));
         } else if (data.action === 'delete') {
@@ -159,14 +166,20 @@ export default function App() {
         break;
       case 'gallery_images':
         if (data.action === 'create') {
-          setGallery(prev => [...prev, data.image].sort((a, b) => a.display_order - b.display_order));
+          setGallery(prev => {
+            if (prev.some(img => img.id === data.image.id)) return prev;
+            return [...prev, data.image].sort((a, b) => a.display_order - b.display_order);
+          });
         } else if (data.action === 'delete') {
           setGallery(prev => prev.filter(img => img.id !== data.id));
         }
         break;
       case 'reviews':
         if (data.action === 'create') {
-          setReviews(prev => [data.review, ...prev]);
+          setReviews(prev => {
+            if (prev.some(r => r.id === data.review.id)) return prev;
+            return [data.review, ...prev];
+          });
         } else if (data.action === 'update') {
           setReviews(prev => prev.map(r => r.id === data.review.id ? data.review : r));
         } else if (data.action === 'delete') {
@@ -175,7 +188,10 @@ export default function App() {
         break;
       case 'first_order_discounts':
         if (data.action === 'create') {
-          setDiscounts(prev => [data.discount, ...prev]);
+          setDiscounts(prev => {
+            if (prev.some(d => d.id === data.discount.id)) return prev;
+            return [data.discount, ...prev];
+          });
         } else if (data.action === 'update') {
           setDiscounts(prev => prev.map(d => d.id === data.discount.id ? data.discount : d));
         } else if (data.action === 'delete') {
@@ -184,7 +200,10 @@ export default function App() {
         break;
       case 'orders':
         if (data.action === 'create') {
-          setOrders(prev => [data.order, ...prev]);
+          setOrders(prev => {
+            if (prev.some(o => o.id === data.order.id)) return prev;
+            return [data.order, ...prev];
+          });
         } else if (data.action === 'update') {
           setOrders(prev => prev.map(o => o.id === data.order.id ? data.order : o));
         }
@@ -287,6 +306,10 @@ export default function App() {
 
     if (route === '#/login') {
       return <AdminLogin onLogin={handleLogin} isAdmin={isAdmin} />;
+    }
+
+    if (route.startsWith('#/reset-password')) {
+      return <ResetPassword />;
     }
 
     if (route === '#/menu') {

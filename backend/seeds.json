@@ -55,7 +55,9 @@
       "100% Fresh Ingredients",
       "Best Multi-Cuisine",
       "Family Dining Room"
-    ]
+    ],
+    "todays_special_name": "Chicken Dum Biryani",
+    "todays_special_image": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=800&q=80"
   },
   "qr_codes": {
     "qr_image_url": null,

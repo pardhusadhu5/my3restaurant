@@ -31,6 +31,16 @@ export default function MenuPage({
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showScrollTop, setShowScrollTop] = useState(false);
 
+  // Dynamic branding text helper
+  const logoText = useMemo(() => {
+    if (!restaurantSettings.name) return { name: 'Mythri', sub: 'Family Restaurant' };
+    const parts = restaurantSettings.name.split('–');
+    if (parts.length > 1) {
+      return { name: parts[0].trim(), sub: parts[1].trim() };
+    }
+    return { name: restaurantSettings.name, sub: 'Family Restaurant' };
+  }, [restaurantSettings.name]);
+
   // Cart and checkout states
   const [cart, setCart] = useState(() => {
     const saved = localStorage.getItem('mythri_cart');
@@ -154,7 +164,8 @@ export default function MenuPage({
 
   // WhatsApp Message Formatter
   const formatWhatsAppMessage = (orderId, name, phone, items, subtotal, discountAmt, finalTotal) => {
-    let message = `*Mythri Family Restaurant - Order Receipt*\n`;
+    const restName = restaurantSettings.name || 'Mythri Family Restaurant';
+    let message = `*${restName} - Order Receipt*\n`;
     message += `----------------------------------------\n`;
     message += `*Order ID:* ${orderId}\n`;
     message += `*Customer:* ${name}\n`;
@@ -300,8 +311,8 @@ export default function MenuPage({
             <div className="flex items-center space-x-3 cursor-pointer" onClick={() => handleNavClick('home')}>
               <img src="/MY3Logo.jpg" className="w-10 h-10 rounded-full border border-gold/40 object-cover" alt="Mythri Logo" />
               <div>
-                <span className="text-white font-bold font-serif text-lg tracking-wide block uppercase">Mythri</span>
-                <span className="text-gold uppercase tracking-[0.25em] text-[8px] block -mt-1 font-semibold">Family Restaurant</span>
+                <span className="text-white font-bold font-serif text-lg tracking-wide block uppercase">{logoText.name}</span>
+                <span className="text-gold uppercase tracking-[0.25em] text-[8px] block -mt-1 font-semibold">{logoText.sub}</span>
               </div>
             </div>
 
@@ -452,7 +463,11 @@ export default function MenuPage({
                       </div>
                     )}
                     {item.image_url ? (
-                      <img src={item.image_url} className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500" alt={item.name} />
+                      <img 
+                        src={`${item.image_url}${item.image_url.includes('?') ? '&' : '?'}t=${item.updated_at ? new Date(item.updated_at).getTime() : (item.created_at ? new Date(item.created_at).getTime() : '')}`} 
+                        className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500" 
+                        alt={item.name} 
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-xs text-zinc-700 uppercase tracking-widest font-bold">Mythri Meal</div>
                     )}
@@ -758,11 +773,15 @@ export default function MenuPage({
           
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-full border border-gold flex items-center justify-center bg-gold/5 font-serif font-bold text-sm text-gold">M3</div>
-              <span className="text-white font-bold font-serif text-sm uppercase tracking-wide">Mythri Restaurant</span>
+              <div className="w-8 h-8 rounded-full border border-gold flex items-center justify-center bg-gold/5 font-serif font-bold text-sm text-gold">
+                {logoText.name.substring(0, 2).toUpperCase()}
+              </div>
+              <span className="text-white font-bold font-serif text-sm uppercase tracking-wide">
+                {restaurantSettings.name || 'Mythri Restaurant'}
+              </span>
             </div>
             <p className="leading-relaxed">
-              Taste the freshness in every single bite. The complete multi-cuisine family dining experience since 2012.
+              {restaurantSettings.description || 'Taste the freshness in every single bite. The complete multi-cuisine family dining experience since 2012.'}
             </p>
           </div>
 
@@ -791,7 +810,7 @@ export default function MenuPage({
           <div className="space-y-4">
             <h4 className="text-white font-bold uppercase tracking-wider text-[10px]">Contact Details</h4>
             <p className="leading-normal">
-              Address: {contactInfo.address || 'Main Road, Near Metro Station, Hyderabad'}<br />
+              Address: {restaurantSettings.address || contactInfo.address || 'Beside KMR Hospital, NH-65, Nandigama'}<br />
               Primary Phone: <a href={`tel:${primaryPhone}`} className="text-zinc-300 hover:text-gold">{primaryPhone}</a><br />
               Secondary Phone: <a href={`tel:${secondaryPhone}`} className="text-zinc-300 hover:text-gold">{secondaryPhone}</a><br />
               Email: <a href={`mailto:${contactInfo.email_address}`} className="text-zinc-300 hover:text-gold">{contactInfo.email_address || 'contact@mythri.com'}</a>
@@ -801,7 +820,7 @@ export default function MenuPage({
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-zinc-900 mt-12 pt-8 flex flex-col md:flex-row items-center justify-between text-[11px] gap-4">
-          <p>© {new Date().getFullYear()} Mythri Family Restaurant. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} {restaurantSettings.name || 'Mythri Family Restaurant'}. All rights reserved.</p>
           <div className="flex space-x-4">
             <a href="#/login" className="hover:text-white transition">Admin Portal</a>
             <span>•</span>

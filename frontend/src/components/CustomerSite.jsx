@@ -75,6 +75,26 @@ export default function CustomerSite({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Dynamic branding text helper
+  const logoText = useMemo(() => {
+    if (!restaurantSettings.name) return { name: 'Mythri', sub: 'Family Restaurant' };
+    const parts = restaurantSettings.name.split('–');
+    if (parts.length > 1) {
+      return { name: parts[0].trim(), sub: parts[1].trim() };
+    }
+    return { name: restaurantSettings.name, sub: 'Family Restaurant' };
+  }, [restaurantSettings.name]);
+
+  // Dynamic Google Maps embed URL
+  const mapsEmbedUrl = useMemo(() => {
+    const link = restaurantSettings.google_maps_link || contactInfo.google_maps_url;
+    if (link && (link.includes('google.com/maps/embed') || link.includes('google.com/maps/embed/v1'))) {
+      return link;
+    }
+    const addressVal = restaurantSettings.address || contactInfo.address || 'Beside KMR Hospital, NH-65, Nandigama';
+    return `https://maps.google.com/maps?q=${encodeURIComponent(addressVal)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+  }, [restaurantSettings.google_maps_link, contactInfo.google_maps_url, restaurantSettings.address, contactInfo.address]);
+
   // Format phone numbers for WA & calls
   const waNumber = useMemo(() => {
     const raw = contactInfo.whatsapp_number || '9676576392';
@@ -89,7 +109,8 @@ export default function CustomerSite({
 
   // --- WHATSAPP ORDER URL CREATOR ---
   const triggerWhatsAppOrder = (dishName, price) => {
-    const message = `Hello Mythri Restaurant,\n\nI would like to order:\nDish Name: ${dishName}\nPrice: ₹${parseFloat(price).toFixed(2)}\n\nPlease confirm availability.`;
+    const restaurantName = logoText.name || 'Mythri Restaurant';
+    const message = `Hello ${restaurantName},\n\nI would like to order:\nDish Name: ${dishName}\nPrice: ₹${parseFloat(price).toFixed(2)}\n\nPlease confirm availability.`;
     const encodedText = encodeURIComponent(message);
     const url = `https://wa.me/${waNumber}?text=${encodedText}`;
     window.open(url, '_blank');
@@ -129,21 +150,22 @@ export default function CustomerSite({
     });
   }, [menuItems, selectedCategory, searchTerm]);
 
-  // Gallery items filtered
+  // Gallery items (category filters removed)
   const filteredGallery = useMemo(() => {
-    if (galleryFilter === 'all') return gallery;
-    return gallery.filter(img => img.category === galleryFilter);
-  }, [gallery, galleryFilter]);
+    return gallery;
+  }, [gallery]);
 
   // Maintenance overlay if website offline
   if (websiteSettings.status === 'maintenance') {
     return (
       <div className="min-h-screen bg-dark-bg flex flex-col items-center justify-center text-center p-6 relative overflow-hidden">
         <div className="absolute w-[500px] h-[500px] rounded-full bg-gold/5 blur-[120px] -top-40 -left-40"></div>
-        <div className="w-16 h-16 rounded-full border border-gold/30 bg-gold/5 flex items-center justify-center text-gold text-2xl font-bold mb-6 font-serif">M3</div>
+        <div className="w-16 h-16 rounded-full border border-gold/30 bg-gold/5 flex items-center justify-center text-gold text-2xl font-bold mb-6 font-serif">
+          {logoText.name.substring(0, 2).toUpperCase()}
+        </div>
         <h1 className="text-3xl md:text-4xl font-bold font-serif text-white tracking-wide">Cooking Something Special</h1>
         <p className="text-zinc-400 text-sm mt-3 max-w-md leading-relaxed">
-          Mythri Family Restaurant digital menu is temporarily undergoing scheduled enhancements. We will be back online shortly!
+          {restaurantSettings.name || 'Mythri Family Restaurant'} digital menu is temporarily undergoing scheduled enhancements. We will be back online shortly!
         </p>
         <div className="mt-8 flex flex-col sm:flex-row items-center gap-4">
           <a href={`tel:${primaryPhone}`} className="px-6 py-2.5 bg-gold hover:bg-gold-light text-black text-xs font-bold rounded-lg transition flex items-center space-x-1.5 shadow-gold">
@@ -211,8 +233,8 @@ export default function CustomerSite({
             <div className="flex items-center space-x-3 cursor-pointer" onClick={() => scrollToSection('home')}>
               <img src="/MY3Logo.jpg" className="w-10 h-10 rounded-full border border-gold/40 object-cover" alt="Mythri Logo" />
               <div>
-                <span className="text-white font-bold font-serif text-lg tracking-wide block uppercase">Mythri</span>
-                <span className="text-gold uppercase tracking-[0.25em] text-[8px] block -mt-1 font-semibold">Family Restaurant</span>
+                <span className="text-white font-bold font-serif text-lg tracking-wide block uppercase">{logoText.name}</span>
+                <span className="text-gold uppercase tracking-[0.25em] text-[8px] block -mt-1 font-semibold">{logoText.sub}</span>
               </div>
             </div>
 
@@ -361,15 +383,15 @@ export default function CustomerSite({
               <div className="relative group w-72 h-72 md:w-96 md:h-96 rounded-full border border-gold/10 p-4 bg-gold/2">
                 <div className="w-full h-full rounded-full overflow-hidden border-2 border-gold/30 shadow-2xl relative">
                   <img 
-                    src="https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=800&q=80" 
+                    src={heroSection.todays_special_image || "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=800&q=80"} 
                     className="w-full h-full object-cover animate-[spin_80s_linear_infinite]"
-                    alt="Signature Dum Biryani" 
+                    alt={heroSection.todays_special_name || "Signature Dum Biryani"} 
                   />
                   <div className="absolute inset-0 bg-black/10"></div>
                 </div>
                 <div className="absolute bottom-4 right-4 glass-panel px-4 py-2 rounded-xl text-left border-l-2 border-gold">
                   <p className="text-[10px] text-gold font-bold uppercase tracking-wider">Today's Special</p>
-                  <p className="text-white text-xs font-bold">Chicken Dum Biryani</p>
+                  <p className="text-white text-xs font-bold">{heroSection.todays_special_name || "Chicken Dum Biryani"}</p>
                 </div>
               </div>
             </div>
@@ -428,25 +450,28 @@ export default function CustomerSite({
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {categories.slice(0, 8).map(c => {
-              let img = "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=400&q=80";
-              if (c.name.includes("Biryani")) {
-                img = "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=400&q=80";
-              } else if (c.name.includes("Starter")) {
-                if (c.name.includes("Veg")) {
-                  img = "https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=400&q=80";
-                } else {
+              let img = c.image_url;
+              if (!img) {
+                img = "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=400&q=80";
+                if (c.name.includes("Biryani")) {
+                  img = "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=400&q=80";
+                } else if (c.name.includes("Starter")) {
+                  if (c.name.includes("Veg")) {
+                    img = "https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=400&q=80";
+                  } else {
+                    img = "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=400&q=80";
+                  }
+                } else if (c.name.includes("Curry") || c.name.includes("Curries")) {
+                  img = "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=400&q=80";
+                } else if (c.name.includes("Tandoori") || c.name.includes("Kebab")) {
                   img = "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=400&q=80";
+                } else if (c.name.includes("Roti") || c.name.includes("Naan")) {
+                  img = "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&w=400&q=80";
+                } else if (c.name.includes("Mandi")) {
+                  img = "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=400&q=80";
+                } else if (c.name.includes("Beverage") || c.name.includes("Beverages")) {
+                  img = "https://images.unsplash.com/photo-1541658016709-82535e94bc69?auto=format&fit=crop&w=400&q=80";
                 }
-              } else if (c.name.includes("Curry") || c.name.includes("Curries")) {
-                img = "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=400&q=80";
-              } else if (c.name.includes("Tandoori") || c.name.includes("Kebab")) {
-                img = "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=400&q=80";
-              } else if (c.name.includes("Roti") || c.name.includes("Naan")) {
-                img = "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&w=400&q=80";
-              } else if (c.name.includes("Mandi")) {
-                img = "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=400&q=80";
-              } else if (c.name.includes("Beverage") || c.name.includes("Beverages")) {
-                img = "https://images.unsplash.com/photo-1541658016709-82535e94bc69?auto=format&fit=crop&w=400&q=80";
               }
               
               return (
@@ -484,23 +509,7 @@ export default function CustomerSite({
             <div className="w-16 h-0.5 bg-gold mx-auto mt-4"></div>
           </div>
 
-          {/* Gallery Category filter */}
-          <div className="flex items-center justify-center space-x-2 mb-10 overflow-x-auto pb-2 text-xs">
-            {['all', 'Food', 'Ambience', 'Family Dining'].map(filter => (
-              <button
-                key={filter}
-                onClick={() => setGalleryFilter(filter)}
-                className={`px-4 py-1.5 rounded-lg border uppercase tracking-wider font-semibold transition-all
-                  ${galleryFilter === filter 
-                    ? 'border-gold text-gold bg-gold/5 font-bold shadow-sm' 
-                    : 'border-zinc-800 text-zinc-500 hover:text-white hover:border-zinc-700'
-                  }
-                `}
-              >
-                {filter === 'all' ? 'All Photos' : filter}
-              </button>
-            ))}
-          </div>
+
 
           {/* Gallery Images Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -648,8 +657,12 @@ export default function CustomerSite({
               
               <div className="glass-panel p-6 rounded-2xl space-y-6">
                 <div>
-                  <h3 className="text-base font-bold text-white font-serif tracking-wide border-b border-zinc-900 pb-2">Mythri Restaurant</h3>
-                  <p className="text-zinc-500 text-xs mt-1">Taste The Freshness In Every Bite</p>
+                  <h3 className="text-base font-bold text-white font-serif tracking-wide border-b border-zinc-900 pb-2">
+                    {restaurantSettings.name || 'Mythri Restaurant'}
+                  </h3>
+                  <p className="text-zinc-500 text-xs mt-1">
+                    {restaurantSettings.tagline || 'Taste The Freshness In Every Bite'}
+                  </p>
                 </div>
 
                 <div className="space-y-4 text-xs">
@@ -657,7 +670,9 @@ export default function CustomerSite({
                     <span className="text-gold mt-0.5"><MapPin size={16} /></span>
                     <div>
                       <p className="text-white font-semibold">Address</p>
-                      <p className="text-zinc-400 mt-1 leading-normal">{contactInfo.address || 'Main Road, Near Metro Station, Hyderabad'}</p>
+                      <p className="text-zinc-400 mt-1 leading-normal">
+                        {restaurantSettings.address || contactInfo.address || 'Beside KMR Hospital, NH-65, Nandigama'}
+                      </p>
                     </div>
                   </div>
 
@@ -678,12 +693,44 @@ export default function CustomerSite({
                       <p className="text-zinc-400">Weekend: {restaurantSettings.opening_hours?.weekend || '11:00 AM - 11:30 PM'}</p>
                     </div>
                   </div>
+
+                  {(contactInfo.facebook || contactInfo.instagram || restaurantSettings.social_media_links?.facebook || restaurantSettings.social_media_links?.instagram) && (
+                    <div className="flex items-start space-x-3 pt-1 border-t border-zinc-900/60 pt-3">
+                      <span className="text-gold mt-0.5"><Users size={16} /></span>
+                      <div>
+                        <p className="text-white font-semibold">Follow Us</p>
+                        <div className="flex space-x-4 mt-2">
+                          {(contactInfo.facebook || restaurantSettings.social_media_links?.facebook) && (
+                            <a 
+                              href={contactInfo.facebook || restaurantSettings.social_media_links?.facebook} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="text-zinc-400 hover:text-gold transition font-medium"
+                            >
+                              Facebook
+                            </a>
+                          )}
+                          {(contactInfo.instagram || restaurantSettings.social_media_links?.instagram) && (
+                            <a 
+                              href={contactInfo.instagram || restaurantSettings.social_media_links?.instagram} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="text-zinc-400 hover:text-gold transition font-medium"
+                            >
+                              Instagram
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
               <a 
-                href={restaurantSettings.google_maps_link || 'https://maps.app.goo.gl/81f9WrWjXGkT2Mth8'}
+                href={restaurantSettings.google_maps_link || contactInfo.google_maps_url || 'https://maps.app.goo.gl/81f9WrWjXGkT2Mth8'}
                 target="_blank"
+                rel="noopener noreferrer"
                 className="w-full py-4 bg-gold-gradient text-black font-bold uppercase rounded-xl hover:opacity-95 text-center text-xs tracking-wider shadow-gold block transition"
               >
                 Get Directions via Google Maps
@@ -691,16 +738,57 @@ export default function CustomerSite({
 
             </div>
 
-            {/* Embedded Google Maps */}
-            <div className="lg:col-span-7 rounded-2xl overflow-hidden min-h-[300px] border border-zinc-900 bg-zinc-950">
+            {/* Embedded Google Maps Container */}
+            <div className="lg:col-span-7 rounded-[20px] overflow-hidden min-h-[350px] border border-zinc-800/80 bg-zinc-950 shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-all duration-300 hover:shadow-[0_20px_40px_rgba(212,175,55,0.06)] hover:scale-[1.01] hover:border-gold/20 relative group">
               <iframe 
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3806.8272225330386!2d78.449742414777!3d17.43209868805374!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bcb90c1f6c4be0d%3A0xea2be1878d655f00!2sAmeerpet%20Metro%20Station!5e0!3m2!1sen!2sin!4v1687440000000!5m2!1sen!2sin" 
-                className="w-full h-full border-0 min-h-[350px] grayscale invert contrast-125 opacity-70"
+                src={mapsEmbedUrl} 
+                className="w-full h-full border-0 min-h-[350px] md:min-h-[400px] grayscale invert contrast-[1.15] opacity-[0.6] transition-opacity duration-300 group-hover:opacity-[0.7]"
                 allowFullScreen="" 
                 loading="lazy" 
                 referrerPolicy="no-referrer-when-downgrade"
                 title="Google Maps"
               ></iframe>
+
+              {/* Subtle Premium Dark Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/45 pointer-events-none transition-all duration-300 group-hover:via-black/10"></div>
+              
+              {/* Subtle Gold Ambient Inner Shadow Border */}
+              <div className="absolute inset-0 border border-gold/5 pointer-events-none rounded-[20px]"></div>
+
+              {/* Floating Information Badge */}
+              <div className="absolute top-4 left-4 right-4 md:right-auto md:max-w-xs p-4 rounded-xl bg-zinc-950/80 backdrop-blur-md border border-zinc-800/50 shadow-lg text-left select-none pointer-events-auto flex items-start space-x-3 transition-transform duration-300 hover:translate-y-[-2px]">
+                <div className="w-8 h-8 rounded-lg bg-gold/10 border border-gold/20 flex items-center justify-center text-gold shrink-0 mt-0.5">
+                  <MapPin size={15} />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-white text-xs font-bold font-serif uppercase tracking-wider">Restaurant Location</h4>
+                  <p className="text-zinc-400 text-[10px] leading-normal font-light">
+                    {restaurantSettings.address || contactInfo.address || 'Beside KMR Hospital, NH-65, Nandigama'}
+                  </p>
+                  <a 
+                    href={restaurantSettings.google_maps_link || contactInfo.google_maps_url || 'https://maps.app.goo.gl/81f9WrWjXGkT2Mth8'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center space-x-1 text-[10px] text-gold font-bold hover:text-gold-light transition pt-1"
+                  >
+                    <span>Open in Google Maps</span>
+                    <ChevronRight size={10} className="mt-0.5" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Modern Premium Call-to-Action Button */}
+              <div className="absolute bottom-4 right-4 pointer-events-auto">
+                <a 
+                  href={restaurantSettings.google_maps_link || contactInfo.google_maps_url || 'https://maps.app.goo.gl/81f9WrWjXGkT2Mth8'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center space-x-2 px-4 py-2 bg-gold-gradient text-black font-bold uppercase rounded-full hover:opacity-90 active:scale-[0.98] transition-all duration-200 shadow-md text-[10px] tracking-wider"
+                >
+                  <MapPin size={12} />
+                  <span>Navigate</span>
+                </a>
+              </div>
             </div>
 
           </div>
@@ -715,10 +803,12 @@ export default function CustomerSite({
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <img src="/MY3Logo.jpg" className="w-8 h-8 rounded-full border border-gold/30 object-cover" alt="Mythri Logo" />
-              <span className="text-white font-bold font-serif text-sm uppercase tracking-wide">Mythri Restaurant</span>
+              <span className="text-white font-bold font-serif text-sm uppercase tracking-wide">
+                {restaurantSettings.name || 'Mythri Restaurant'}
+              </span>
             </div>
             <p className="leading-relaxed">
-              Taste the freshness in every single bite. The complete multi-cuisine family dining experience since 2012.
+              {restaurantSettings.description || 'Taste the freshness in every single bite. The complete multi-cuisine family dining experience since 2012.'}
             </p>
           </div>
 
@@ -755,7 +845,7 @@ export default function CustomerSite({
           <div className="space-y-4">
             <h4 className="text-white font-bold uppercase tracking-wider text-[10px]">Contact Details</h4>
             <p className="leading-normal">
-              Address: {contactInfo.address || 'Main Road, Near Metro Station, Hyderabad'}<br />
+              Address: {restaurantSettings.address || contactInfo.address || 'Beside KMR Hospital, NH-65, Nandigama'}<br />
               Primary Phone: <a href={`tel:${primaryPhone}`} className="text-zinc-300 hover:text-gold">{primaryPhone}</a><br />
               Secondary Phone: <a href={`tel:${secondaryPhone}`} className="text-zinc-300 hover:text-gold">{secondaryPhone}</a><br />
               Email: <a href={`mailto:${contactInfo.email_address}`} className="text-zinc-300 hover:text-gold">{contactInfo.email_address || 'contact@mythri.com'}</a>
@@ -765,7 +855,7 @@ export default function CustomerSite({
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-zinc-900 mt-12 pt-8 flex flex-col md:flex-row items-center justify-between text-[11px] gap-4">
-          <p>© {new Date().getFullYear()} Mythri Family Restaurant. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} {restaurantSettings.name || 'Mythri Family Restaurant'}. All rights reserved.</p>
           <div className="flex space-x-4">
             <a href="#/login" className="hover:text-white transition">Admin Portal</a>
             <span>•</span>

@@ -4,6 +4,8 @@ const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 const db = require('./db');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 require('dotenv').config();
 
 const app = express();
@@ -124,6 +126,159 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+// Helper: send password reset email
+async function sendResetEmail(email, token, expiresAt) {
+  const resetLink = `http://localhost:5173/#/reset-password?token=${token}`;
+  const expiryTimeStr = new Date(expiresAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const expiryDateStr = new Date(expiresAt).toLocaleDateString();
+  
+  const emailHtml = `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #1a1a1a; background-color: #070708; color: #f4f4f5; border-radius: 12px;">
+      <div style="text-align: center; border-bottom: 1px solid #1a1a1a; padding-bottom: 15px; margin-bottom: 20px;">
+        <h2 style="color: #d4af37; margin: 0; font-family: serif;">Mythri Family Restaurant</h2>
+        <span style="color: #71717a; font-size: 11px;">Admin Portal Security</span>
+      </div>
+      
+      <p style="font-size: 14px; line-height: 1.6;">Hello,</p>
+      <p style="font-size: 14px; line-height: 1.6;">We received a request to reset your admin password. Click the button below to choose a new password. This link is valid for 1 hour until <strong>${expiryTimeStr} on ${expiryDateStr}</strong>.</p>
+      
+      <div style="text-align: center; margin: 25px 0;">
+        <a href="${resetLink}" style="display: inline-block; padding: 12px 24px; background-color: #d4af37; color: #000000; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px;">Reset Password</a>
+      </div>
+      
+      <p style="font-size: 12px; color: #71717a; line-height: 1.6; margin-top: 30px; border-top: 1px solid #1a1a1a; padding-top: 15px;">
+        <strong>Security note:</strong> If you did not request this password reset, please ignore this email. Your password will remain unchanged and secure. A password reset link can only be used once.
+      </p>
+    </div>
+  `;
+
+  const emailText = `Mythri Family Restaurant - Admin Password Reset\n\nWe received a request to reset your admin password. Use the link below to choose a new password. This link is valid until ${expiryTimeStr} on ${expiryDateStr}.\n\nReset Password Link: ${resetLink}\n\nSecurity note: If you did not request this, please ignore this email. Your password will remain secure.`;
+
+  // Log to terminal
+  console.log(`\n==================================================`);
+  console.log(`  PASSWORD RESET REQUEST (LOCAL DEV MODE)`);
+  console.log(`  Email: ${email}`);
+  console.log(`  Reset Link: ${resetLink}`);
+  console.log(`  Expires At: ${expiresAt}`);
+  console.log(`==================================================\n`);
+
+  // Write to log file
+  const logPath = path.join(__dirname, 'sent-emails.log');
+  const logContent = `[${new Date().toISOString()}] To: ${email}\nReset Link: ${resetLink}\nExpires: ${expiresAt}\n\n`;
+  fs.appendFileSync(logPath, logContent, 'utf8');
+
+  // Try SMTP transport if env vars are present
+  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+    try {
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT) || 587,
+        secure: process.env.SMTP_SECURE === 'true',
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS
+        }
+      });
+      
+      await transporter.sendMail({
+        from: `"${process.env.SMTP_FROM_NAME || 'Mythri Restaurant'}" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`,
+        to: email,
+        subject: 'Mythri Restaurant - Admin Password Reset',
+        text: emailText,
+        html: emailHtml
+      });
+      console.log(`Reset email successfully sent to ${email} via SMTP.`);
+    } catch (err) {
+      console.error('Failed to send email via SMTP, fell back to local file logging:', err.message);
+    }
+  }
+}
+
+// Forgot Password Route
+app.post('/api/auth/forgot-password', async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: 'Email address is required' });
+  }
+
+  try {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Invalid email address format' });
+    }
+
+    const emailExists = await db.adminEmailExists(email);
+    
+    // Always return generic success for security, but only send email if registered
+    if (emailExists) {
+      const token = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 3600000).toISOString(); // 1 hour expiry
+      
+      await db.createPasswordResetToken(email, token, expiresAt);
+      await sendResetEmail(email, token, expiresAt);
+    } else {
+      console.log(`Forgot password request for unregistered email: ${email} (Generic success message returned).`);
+    }
+
+    res.json({ message: 'If this email is registered, a password reset link has been sent.' });
+  } catch (err) {
+    console.error('Error in forgot-password:', err);
+    res.status(500).json({ error: 'An error occurred while processing your request.' });
+  }
+});
+
+// Validate Reset Token Route
+app.get('/api/auth/validate-reset-token', async (req, res) => {
+  const { token } = req.query;
+  if (!token) {
+    return res.status(400).json({ error: 'Token is required' });
+  }
+
+  try {
+    const resetEntry = await db.getPasswordResetToken(token);
+    if (!resetEntry || resetEntry.used || new Date(resetEntry.expires_at) < new Date()) {
+      return res.status(400).json({ error: 'This password reset link is invalid or has expired.' });
+    }
+    res.json({ valid: true, email: resetEntry.email });
+  } catch (err) {
+    console.error('Error validating token:', err);
+    res.status(500).json({ error: 'An error occurred while validating the reset token.' });
+  }
+});
+
+// Reset Password Route
+app.post('/api/auth/reset-password', async (req, res) => {
+  const { token, password } = req.body;
+  if (!token || !password) {
+    return res.status(400).json({ error: 'Token and new password are required' });
+  }
+
+  try {
+    // Validate token first
+    const resetEntry = await db.getPasswordResetToken(token);
+    if (!resetEntry || resetEntry.used || new Date(resetEntry.expires_at) < new Date()) {
+      return res.status(400).json({ error: 'This password reset link is invalid or has expired.' });
+    }
+
+    const salt = 'mythri_restaurant_salt_2026';
+    const hashedPassword = crypto.createHmac('sha256', salt).update(password).digest('hex');
+
+    // Update in database
+    const success = await db.updateAdminPassword(resetEntry.email, hashedPassword);
+    if (!success) {
+      return res.status(404).json({ error: 'Admin account not found.' });
+    }
+
+    // Invalidate token
+    await db.invalidatePasswordResetToken(token);
+
+    res.json({ message: 'Password has been reset successfully.' });
+  } catch (err) {
+    console.error('Error in reset-password:', err);
+    res.status(500).json({ error: 'An error occurred while resetting the password.' });
+  }
+});
+
 // Website Settings
 app.get('/api/website-settings', async (req, res) => {
   const settings = await db.getWebsiteSettings();
@@ -167,7 +322,28 @@ app.get('/api/hero-section', async (req, res) => {
 });
 
 app.put('/api/hero-section', requireAuth, async (req, res) => {
+  const oldHero = await db.getHeroSection();
   const updated = await db.updateHeroSection(req.body);
+  
+  // Clean up old Today's Special image file if replaced and it was a local upload
+  if (oldHero && oldHero.todays_special_image && oldHero.todays_special_image !== updated.todays_special_image) {
+    const isLocalUpload = oldHero.todays_special_image.includes('/uploads/');
+    if (isLocalUpload) {
+      try {
+        const filename = oldHero.todays_special_image.split('/uploads/')[1];
+        if (filename) {
+          const oldFilePath = path.join(uploadsDir, filename);
+          if (fs.existsSync(oldFilePath)) {
+            fs.unlinkSync(oldFilePath);
+            console.log(`Deleted replaced old Today's Special image: ${filename}`);
+          }
+        }
+      } catch (err) {
+        console.error(`Failed to delete old Today's Special image:`, err.message);
+      }
+    }
+  }
+
   broadcast('hero_section', updated);
   res.json(updated);
 });
@@ -228,14 +404,56 @@ app.post('/api/menu-items', requireAuth, async (req, res) => {
 });
 
 app.put('/api/menu-items/:id', requireAuth, async (req, res) => {
+  const oldItem = await db.getMenuItemById(req.params.id);
   const item = await db.updateMenuItem(req.params.id, req.body);
   if (!item) return res.status(404).json({ error: 'Menu item not found' });
+
+  // Clean up old image if replaced and it was a local upload
+  if (oldItem && oldItem.image_url && oldItem.image_url !== item.image_url) {
+    const isLocalUpload = oldItem.image_url.includes('/uploads/');
+    if (isLocalUpload) {
+      try {
+        const filename = oldItem.image_url.split('/uploads/')[1];
+        if (filename) {
+          const oldFilePath = path.join(uploadsDir, filename);
+          if (fs.existsSync(oldFilePath)) {
+            fs.unlinkSync(oldFilePath);
+            console.log(`Deleted replaced old menu item image: ${filename}`);
+          }
+        }
+      } catch (err) {
+        console.error(`Failed to delete old menu item image:`, err.message);
+      }
+    }
+  }
+
   broadcast('menu_items', { action: 'update', item });
   res.json(item);
 });
 
 app.delete('/api/menu-items/:id', requireAuth, async (req, res) => {
+  const oldItem = await db.getMenuItemById(req.params.id);
   await db.deleteMenuItem(req.params.id);
+
+  // Clean up image if it was a local upload
+  if (oldItem && oldItem.image_url) {
+    const isLocalUpload = oldItem.image_url.includes('/uploads/');
+    if (isLocalUpload) {
+      try {
+        const filename = oldItem.image_url.split('/uploads/')[1];
+        if (filename) {
+          const oldFilePath = path.join(uploadsDir, filename);
+          if (fs.existsSync(oldFilePath)) {
+            fs.unlinkSync(oldFilePath);
+            console.log(`Deleted menu item image on deletion: ${filename}`);
+          }
+        }
+      } catch (err) {
+        console.error(`Failed to delete menu item image on deletion:`, err.message);
+      }
+    }
+  }
+
   broadcast('menu_items', { action: 'delete', id: req.params.id });
   res.json({ success: true });
 });

@@ -53,6 +53,8 @@ CREATE TABLE IF NOT EXISTS hero_section (
     background_image_url TEXT DEFAULT 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1920&q=80',
     cta_buttons JSONB DEFAULT '[{"text": "Order on WhatsApp", "action": "whatsapp", "primary": true}, {"text": "View Menu", "action": "menu", "primary": false}]'::jsonb,
     badges JSONB DEFAULT '["100% Fresh Ingredients", "Best Multi-Cuisine", "Family Dining Room"]'::jsonb,
+    todays_special_name TEXT NOT NULL DEFAULT 'Chicken Dum Biryani',
+    todays_special_image TEXT DEFAULT 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=800&q=80',
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -75,7 +77,8 @@ CREATE TABLE IF NOT EXISTS menu_items (
     status TEXT NOT NULL DEFAULT 'visible', -- 'visible', 'hidden'
     is_popular BOOLEAN DEFAULT false,
     display_order INTEGER DEFAULT 0,
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 

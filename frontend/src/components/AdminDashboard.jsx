@@ -57,10 +57,24 @@ export default function AdminDashboard({
   const [infoForm, setInfoForm] = useState({ ...restaurantSettings });
   const [contactForm, setContactForm] = useState({ ...contactInfo });
   const [heroForm, setHeroForm] = useState({ ...heroSection });
+  const [todaysSpecialForm, setTodaysSpecialForm] = useState({
+    dish_name: heroSection?.todays_special_name || '',
+    dish_image: heroSection?.todays_special_image || ''
+  });
+  const [specialUploadType, setSpecialUploadType] = useState('file'); // 'file' or 'url'
+  const [specialFileError, setSpecialFileError] = useState('');
+  const [specialUrlError, setSpecialUrlError] = useState('');
   const [qrForm, setQrForm] = useState({ ...qrCode });
   const [reviewForm, setReviewForm] = useState({ customer_name: '', review_text: '', rating: 5, photo_url: '', status: 'visible', isEdit: false, id: null });
   const [galleryForm, setGalleryForm] = useState({ image_url: '', category: 'Food', display_order: 0 });
+  const [galleryUploadType, setGalleryUploadType] = useState('file'); // 'file' or 'url'
+  const [galleryFileError, setGalleryFileError] = useState('');
   const [settingsForm, setSettingsForm] = useState({ ...websiteSettings });
+  const [quickImageCatFilter, setQuickImageCatFilter] = useState('all');
+  const [dishUploadType, setDishUploadType] = useState('file'); // 'file' or 'url'
+  const [dishFileError, setDishFileError] = useState('');
+  const [catUploadModes, setCatUploadModes] = useState({});
+  const [catUrlInputs, setCatUrlInputs] = useState({});
 
   // Filtering states
   const [menuSearch, setMenuSearch] = useState('');
@@ -108,6 +122,17 @@ export default function AdminDashboard({
       });
     }
   }, [websiteSettings]);
+
+  // Sync hero settings and Today's Special when the heroSection prop updates
+  useEffect(() => {
+    if (heroSection) {
+      setHeroForm({ ...heroSection });
+      setTodaysSpecialForm({
+        dish_name: heroSection.todays_special_name || '',
+        dish_image: heroSection.todays_special_image || ''
+      });
+    }
+  }, [heroSection]);
 
   const handleFirstOrderSettingsSubmit = async (e) => {
     e.preventDefault();
@@ -336,6 +361,89 @@ export default function AdminDashboard({
     }
   };
 
+  const handleUpdateDishImage = async (dish, file) => {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      alert('Unsupported file type. Please upload a JPG, JPEG, PNG, or WEBP image.');
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      const res = await api.uploadImage(file);
+      if (res.success) {
+        const itemData = {
+          name: dish.name,
+          price: parseFloat(dish.price) || 0,
+          category_id: dish.category_id,
+          description: dish.description,
+          image_url: res.file_path,
+          status: dish.status,
+          is_popular: !!dish.is_popular,
+          display_order: parseInt(dish.display_order) || 0
+        };
+        await api.updateMenuItem(dish.id, itemData);
+        triggerSuccess(`Image for "${dish.name}" updated successfully!`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to update dish image: ' + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRemoveDishImage = async (dish) => {
+    if (!window.confirm(`Are you sure you want to remove the image for "${dish.name}"?`)) {
+      return;
+    }
+    try {
+      setActionLoading(true);
+      const itemData = {
+        name: dish.name,
+        price: parseFloat(dish.price) || 0,
+        category_id: dish.category_id,
+        description: dish.description,
+        image_url: '',
+        status: dish.status,
+        is_popular: !!dish.is_popular,
+        display_order: parseInt(dish.display_order) || 0
+      };
+      await api.updateMenuItem(dish.id, itemData);
+      triggerSuccess(`Image for "${dish.name}" removed successfully!`);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to remove dish image: ' + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleSaveCatUrl = async (c, url) => {
+    if (!url) {
+      alert('Please enter a valid image URL');
+      return;
+    }
+    const allowedExtensions = /\.(jpeg|jpg|png|webp|gif)/i;
+    if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('data:image')) {
+      alert('Please enter a valid HTTP or HTTPS image URL link.');
+      return;
+    }
+    if (!allowedExtensions.test(url) && !url.startsWith('data:image')) {
+      alert('The URL does not seem to point to a supported image file (JPG, JPEG, PNG, or WEBP).');
+      return;
+    }
+    try {
+      setActionLoading(true);
+      await api.updateCategory(c.id, { image_url: url });
+      triggerSuccess(`Category image for "${c.name}" updated successfully!`);
+    } catch (err) {
+      alert('Failed to update category image: ' + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   // Menu Item Submit
   const handleItemSubmit = async (e) => {
     e.preventDefault();
@@ -412,6 +520,83 @@ export default function AdminDashboard({
     }
   };
 
+  const handleSpecialFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      setSpecialFileError("Invalid format. Choose JPG, JPEG, PNG, or WEBP.");
+      return;
+    }
+    setSpecialFileError('');
+
+    try {
+      setUploading(true);
+      const res = await api.uploadImage(file);
+      if (res.success) {
+        setTodaysSpecialForm(prev => ({
+          ...prev,
+          dish_image: res.file_path
+        }));
+        triggerSuccess("Image uploaded successfully!");
+      }
+    } catch (err) {
+      console.error(err);
+      setSpecialFileError("Upload failed: " + err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSpecialUrlChange = (e) => {
+    const val = e.target.value;
+    setTodaysSpecialForm(prev => ({ ...prev, dish_image: val }));
+    
+    if (val && !val.startsWith('http://') && !val.startsWith('https://')) {
+      setSpecialUrlError("Please enter a valid absolute URL (starting with http:// or https://)");
+    } else {
+      setSpecialUrlError('');
+    }
+  };
+
+  const handleTodaysSpecialSubmit = async (e) => {
+    e.preventDefault();
+    if (!todaysSpecialForm.dish_name.trim()) {
+      alert("Dish name cannot be empty");
+      return;
+    }
+    if (!todaysSpecialForm.dish_image.trim()) {
+      alert("Please upload an image or provide a valid URL");
+      return;
+    }
+
+    if (specialUploadType === 'url') {
+      try {
+        new URL(todaysSpecialForm.dish_image);
+      } catch (_) {
+        setSpecialUrlError("Please enter a valid absolute URL (starting with http:// or https://)");
+        return;
+      }
+    }
+
+    try {
+      setActionLoading(true);
+      const updatedHero = {
+        ...heroSection,
+        todays_special_name: todaysSpecialForm.dish_name.trim(),
+        todays_special_image: todaysSpecialForm.dish_image.trim()
+      };
+      await api.updateHeroSection(updatedHero);
+      triggerSuccess("Today's Special updated successfully!");
+    } catch (err) {
+      alert(err.message || "Failed to save Today's Special changes");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   // QR Code Submit
   const handleQrSubmit = async (e) => {
     e.preventDefault();
@@ -458,6 +643,7 @@ export default function AdminDashboard({
       await api.addGalleryImage(galleryForm.image_url, galleryForm.category, galleryForm.display_order);
       triggerSuccess('Image added to gallery!');
       setGalleryForm({ image_url: '', category: 'Food', display_order: 0 });
+      setGalleryFileError('');
     } catch (err) {
       alert(err.message);
     } finally {
@@ -524,17 +710,17 @@ export default function AdminDashboard({
     }
   };
 
-  // Sidebar Menu Items
   const menuList = [
     { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
     { id: 'menu', name: 'Menu Management', icon: Utensils },
+    { id: 'category_images', name: 'Category Images', icon: ImageIcon },
     { id: 'orders', name: 'Order History', icon: ShoppingBag },
     { id: 'discounts', name: 'Customer Discounts', icon: Gift },
     { id: 'info', name: 'Restaurant Settings', icon: Info },
     { id: 'contact', name: 'Contact Info', icon: Phone },
     { id: 'gallery', name: 'Gallery', icon: ImageIcon },
     { id: 'qr', name: 'QR Menu Management', icon: QrCode },
-    { id: 'hero', name: 'Hero Customization', icon: Home },
+    { id: 'hero', name: 'Hero Section Management', icon: Home },
     { id: 'reviews', name: 'Customer Reviews', icon: Star },
     { id: 'settings', name: 'Website Settings', icon: Settings },
   ];
@@ -729,106 +915,244 @@ export default function AdminDashboard({
           )}
 
           {/* ============================================================== */}
+          {/* TAB: MENU CATEGORY IMAGE MANAGEMENT */}
+          {/* ============================================================== */}
+          {activeTab === 'category_images' && (
+            <div className="space-y-6">
+              <div className="border-b border-zinc-900 pb-3">
+                <h3 className="text-sm font-bold text-white font-serif tracking-wide">Menu Category Image Management</h3>
+                <p className="text-[10px] text-zinc-550 mt-0.5">Upload or replace high-quality background images for the 8 category cards displayed on the website Home page.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {categories.slice(0, 8).map(c => {
+                  let fallbackImg = "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=400&q=80";
+                  if (c.name.includes("Biryani")) {
+                    fallbackImg = "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=400&q=80";
+                  } else if (c.name.includes("Starter")) {
+                    if (c.name.includes("Veg")) {
+                      fallbackImg = "https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=400&q=80";
+                    } else {
+                      fallbackImg = "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=400&q=80";
+                    }
+                  } else if (c.name.includes("Curry") || c.name.includes("Curries")) {
+                    fallbackImg = "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=400&q=80";
+                  } else if (c.name.includes("Tandoori") || c.name.includes("Kebab")) {
+                    fallbackImg = "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=400&q=80";
+                  } else if (c.name.includes("Roti") || c.name.includes("Naan")) {
+                    fallbackImg = "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&w=400&q=80";
+                  } else if (c.name.includes("Mandi")) {
+                    fallbackImg = "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=400&q=80";
+                  } else if (c.name.includes("Beverage") || c.name.includes("Beverages")) {
+                    fallbackImg = "https://images.unsplash.com/photo-1541658016709-82535e94bc69?auto=format&fit=crop&w=400&q=80";
+                  }
+
+                  const currentImg = c.image_url || fallbackImg;
+                  const currentMode = catUploadModes[c.id] || 'file';
+
+                  return (
+                    <div key={c.id} className="glass-panel p-4 rounded-2xl flex flex-col space-y-4 border border-zinc-900 bg-zinc-950/20 hover:border-zinc-800/80 transition duration-300">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="text-sm font-bold text-white font-serif tracking-wide">{c.name}</h4>
+                          <p className="text-[10px] text-zinc-500 mt-0.5">Category Background</p>
+                        </div>
+                        {c.image_url && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              if (!confirm(`Are you sure you want to reset the image for "${c.name}" to default?`)) return;
+                              try {
+                                setActionLoading(true);
+                                await api.updateCategory(c.id, { image_url: '' });
+                                setCatUrlInputs(prev => ({ ...prev, [c.id]: '' }));
+                                triggerSuccess(`Category image for "${c.name}" reset to default!`);
+                              } catch (err) {
+                                alert('Failed to reset image: ' + err.message);
+                              } finally {
+                                setActionLoading(false);
+                              }
+                            }}
+                            className="text-[9px] px-1.5 py-0.5 border border-red-500/20 hover:bg-red-950/20 text-red-400 font-bold rounded transition"
+                            title="Reset to Default Image"
+                          >
+                            Reset
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Image Preview Container */}
+                      <div className="relative aspect-video rounded-xl overflow-hidden bg-zinc-900 border border-zinc-850">
+                        <img src={currentImg} className="w-full h-full object-cover" alt={c.name} />
+                        {!c.image_url && (
+                          <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-zinc-950/80 text-[8px] uppercase tracking-wider text-gold font-bold border border-gold/25">
+                            Default Fallback
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Option Selector Toggle */}
+                      <div className="flex border-b border-zinc-900/60 pb-1 text-[10px]">
+                        <button
+                          type="button"
+                          onClick={() => setCatUploadModes(prev => ({ ...prev, [c.id]: 'file' }))}
+                          className={`flex-1 py-1 font-bold text-center border-b-2 uppercase transition-all duration-200 ${currentMode === 'file' ? 'border-gold text-white font-extrabold' : 'border-transparent text-zinc-500'}`}
+                        >
+                          Upload File
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setCatUploadModes(prev => ({ ...prev, [c.id]: 'url' }))}
+                          className={`flex-1 py-1 font-bold text-center border-b-2 uppercase transition-all duration-200 ${currentMode === 'url' ? 'border-gold text-white font-extrabold' : 'border-transparent text-zinc-500'}`}
+                        >
+                          Image URL
+                        </button>
+                      </div>
+
+                      {/* Options Input View */}
+                      <div className="text-[11px]">
+                        {currentMode === 'file' ? (
+                          <label className="w-full py-2 bg-zinc-850 hover:bg-zinc-700 cursor-pointer rounded-lg border border-zinc-750 text-zinc-300 text-xs font-bold flex items-center justify-center transition space-x-1.5">
+                            <Upload size={13} />
+                            <span>Upload Image</span>
+                            <input 
+                              type="file" 
+                              accept="image/jpeg,image/jpg,image/png,image/webp" 
+                              className="hidden" 
+                              onChange={async (e) => {
+                                const file = e.target.files[0];
+                                if (!file) return;
+                                
+                                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+                                if (!allowedTypes.includes(file.type)) {
+                                  alert('Supported formats are JPG, JPEG, PNG, or WEBP.');
+                                  return;
+                                }
+
+                                try {
+                                  setActionLoading(true);
+                                  const res = await api.uploadImage(file);
+                                  if (res.success) {
+                                    await api.updateCategory(c.id, { image_url: res.file_path });
+                                    triggerSuccess(`Category image for "${c.name}" updated successfully!`);
+                                  }
+                                } catch (err) {
+                                  console.error(err);
+                                  alert('Failed to upload category image: ' + err.message);
+                                } finally {
+                                  setActionLoading(false);
+                                }
+                              }}
+                            />
+                          </label>
+                        ) : (
+                          <div className="flex space-x-2">
+                            <input
+                              type="text"
+                              value={catUrlInputs[c.id] !== undefined ? catUrlInputs[c.id] : (c.image_url || '')}
+                              onChange={(e) => setCatUrlInputs(prev => ({ ...prev, [c.id]: e.target.value }))}
+                              placeholder="Paste Image URL"
+                              className="flex-1 px-2.5 py-1.5 bg-zinc-900 border border-zinc-800 focus:outline-none focus:border-gold/40 text-white rounded-lg text-xs"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const url = catUrlInputs[c.id];
+                                handleSaveCatUrl(c, url !== undefined ? url : (c.image_url || ''));
+                              }}
+                              className="px-3 py-1.5 bg-gold hover:bg-gold-light text-black font-extrabold rounded-lg transition"
+                            >
+                              Save
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================== */}
           {/* TAB: MENU MANAGEMENT */}
           {/* ============================================================== */}
           {activeTab === 'menu' && (
             <div className="space-y-8">
-              
-              {/* CATEGORIES MANAGEMENT SECTION */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                {/* Left Form: Add/Edit Category */}
-                <div className="glass-panel p-6 rounded-2xl space-y-4 h-fit">
-                  <h3 className="text-sm font-bold text-white font-serif tracking-wide border-b border-zinc-900 pb-3">
-                    {categoryForm.isEdit ? 'Edit Category' : 'Add New Category'}
-                  </h3>
-                  <form onSubmit={handleCategorySubmit} className="space-y-4">
-                    <div>
-                      <label className="block text-zinc-500 text-xs mb-1">Category Name</label>
-                      <input 
-                        type="text"
-                        value={categoryForm.name}
-                        onChange={(e) => setCategoryForm(prev => ({ ...prev, name: e.target.value }))}
-                        className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
-                        placeholder="e.g., Starters"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-zinc-500 text-xs mb-1">Display Order</label>
-                      <input 
-                        type="number"
-                        value={categoryForm.display_order}
-                        onChange={(e) => setCategoryForm(prev => ({ ...prev, display_order: parseInt(e.target.value) || 0 }))}
-                        className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
-                        placeholder="0"
-                      />
-                    </div>
-                    <div className="flex space-x-2 pt-2">
-                      <button 
-                        type="submit" 
-                        disabled={actionLoading}
-                        className="flex-1 py-2 bg-gold hover:bg-gold-light text-black text-xs font-bold rounded-lg transition"
-                      >
-                        {categoryForm.isEdit ? 'Save Changes' : 'Add Category'}
-                      </button>
-                      {categoryForm.isEdit && (
-                        <button 
-                          type="button" 
-                          onClick={() => setCategoryForm({ name: '', display_order: 0, isEdit: false, id: null })}
-                          className="px-3 py-2 border border-zinc-800 hover:bg-zinc-900 text-zinc-400 text-xs font-semibold rounded-lg transition"
-                        >
-                          Cancel
-                        </button>
-                      )}
-                    </div>
-                  </form>
-                </div>
-
-                {/* Right List: Categories list */}
-                <div className="glass-panel p-6 rounded-2xl lg:col-span-2 space-y-4">
-                  <h3 className="text-sm font-bold text-white font-serif tracking-wide border-b border-zinc-900 pb-3">Available Categories</h3>
-                  
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs border-collapse">
-                      <thead>
-                        <tr className="border-b border-zinc-900 text-zinc-500 font-semibold">
-                          <th className="py-2.5">Name</th>
-                          <th className="py-2.5">Display Order</th>
-                          <th className="py-2.5 text-right">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {categories.map(c => (
-                          <tr key={c.id} className="border-b border-zinc-900/40 hover:bg-zinc-900/10">
-                            <td className="py-3 font-semibold text-white">{c.name}</td>
-                            <td className="py-3 text-zinc-400">{c.display_order}</td>
-                            <td className="py-3 text-right space-x-2">
-                              <button 
-                                onClick={() => setCategoryForm({ name: c.name, display_order: c.display_order, isEdit: true, id: c.id })}
-                                className="p-1 text-zinc-400 hover:text-gold transition"
-                              >
-                                <Edit size={14} />
-                              </button>
-                              <button 
-                                onClick={() => handleDeleteCategory(c.id)}
-                                className="p-1 text-zinc-400 hover:text-red-400 transition"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                        {categories.length === 0 && (
-                          <tr>
-                            <td colSpan="3" className="py-6 text-center text-zinc-600">No categories found. Create one first!</td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
+                     {/* DISH IMAGE QUICK MANAGEMENT SECTION */}
+              <div className="glass-panel p-6 rounded-2xl space-y-4">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b border-zinc-900 pb-3">
+                  <div>
+                    <h3 className="text-sm font-bold text-white font-serif tracking-wide">Dish Image Quick Management</h3>
+                    <p className="text-[10px] text-zinc-500 mt-0.5">Quickly view, upload, or replace images for any menu item directly from your device.</p>
                   </div>
+                  <select 
+                    onChange={(e) => setQuickImageCatFilter(e.target.value)}
+                    value={quickImageCatFilter}
+                    className="px-2 py-1 bg-zinc-900 border border-zinc-800 rounded-lg text-[10px] text-white focus:outline-none"
+                  >
+                    <option value="all">All Categories</option>
+                    {categories.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
                 </div>
 
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[350px] overflow-y-auto pr-1">
+                  {menuItems
+                    .filter(item => quickImageCatFilter === 'all' || item.category_id === quickImageCatFilter)
+                    .map(item => {
+                      const catName = categories.find(c => c.id === item.category_id)?.name || 'Unassigned';
+                      return (
+                        <div key={item.id} className="relative group rounded-xl p-3 bg-zinc-900/40 border border-zinc-800/80 hover:border-gold/20 flex flex-col justify-between space-y-3 transition text-[11px]">
+                          <div className="flex items-center space-x-3">
+                            <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-zinc-950 border border-zinc-800/50 shrink-0">
+                              {item.image_url ? (
+                                <img src={`${item.image_url}${item.image_url.includes('?') ? '&' : '?'}t=${item.updated_at ? new Date(item.updated_at).getTime() : (item.created_at ? new Date(item.created_at).getTime() : '')}`} className="w-full h-full object-cover" alt="" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-[9px] text-zinc-600 font-semibold bg-zinc-900 uppercase">No Img</div>
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <h4 className="text-white font-bold truncate">{item.name}</h4>
+                              <p className="text-zinc-500 text-[10px] font-medium truncate mt-0.5">{catName}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center space-x-2 w-full">
+                            <label className="flex-1 py-1.5 bg-zinc-800 hover:bg-zinc-700 cursor-pointer rounded-lg border border-zinc-700 text-zinc-300 font-bold flex items-center justify-center transition space-x-1">
+                              <Upload size={10} />
+                              <span>Upload</span>
+                              <input 
+                                type="file" 
+                                accept="image/jpeg,image/jpg,image/png,image/webp" 
+                                className="hidden" 
+                                onChange={(e) => {
+                                  const file = e.target.files[0];
+                                  if (file) handleUpdateDishImage(item, file);
+                                }}
+                              />
+                            </label>
+                            
+                            {item.image_url && (
+                              <button 
+                                type="button"
+                                onClick={() => handleRemoveDishImage(item)}
+                                className="px-2 py-1.5 bg-red-950/20 border border-red-500/10 text-red-400 hover:bg-red-900/20 rounded-lg transition"
+                                title="Remove Image"
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  {menuItems.filter(item => quickImageCatFilter === 'all' || item.category_id === quickImageCatFilter).length === 0 && (
+                    <div className="col-span-full py-8 text-center text-zinc-600">No dishes found in this category.</div>
+                  )}
+                </div>
               </div>
 
               <hr className="border-zinc-900" />
@@ -836,144 +1160,219 @@ export default function AdminDashboard({
               {/* DISHES MANAGEMENT SECTION */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
-                {/* Left Form: Add/Edit Dish */}
-                <div className="glass-panel p-6 rounded-2xl space-y-4 h-fit">
-                  <h3 className="text-sm font-bold text-white font-serif tracking-wide border-b border-zinc-900 pb-3">
-                    {itemForm.isEdit ? 'Edit Menu Dish' : 'Add New Menu Dish'}
-                  </h3>
-                  <form onSubmit={handleItemSubmit} className="space-y-4 text-xs">
-                    <div>
-                      <label className="block text-zinc-500 mb-1">Dish Name *</label>
-                      <input 
-                        type="text"
-                        value={itemForm.name}
-                        onChange={(e) => setItemForm(prev => ({ ...prev, name: e.target.value }))}
-                        className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
-                        placeholder="e.g., Mutton Biryani"
-                        required
-                      />
-                    </div>
+                {/* Redesigned Menu Editor */}
+                <div className="glass-panel p-6 rounded-2xl space-y-4 h-fit border border-zinc-800/80">
+                  <div className="border-b border-zinc-900 pb-3">
+                    <h3 className="text-sm font-bold text-white font-serif tracking-wide">
+                      {itemForm.isEdit ? 'Edit Menu Dish' : 'Add New Menu Dish'}
+                    </h3>
+                    <p className="text-[10px] text-zinc-500 mt-0.5">Fill in the fields below to update or create a menu item.</p>
+                  </div>
+
+                  <form onSubmit={handleItemSubmit} className="space-y-5 text-xs">
                     
-                    <div className="grid grid-cols-2 gap-3">
+                    {/* GROUP 1: Dish details */}
+                    <div className="space-y-3">
+                      <p className="text-[10px] uppercase font-bold tracking-wider text-gold/80 font-mono">1. Basic Information</p>
+                      
                       <div>
-                        <label className="block text-zinc-500 mb-1">Price (₹) *</label>
+                        <label className="block text-zinc-500 mb-1">Dish Name *</label>
                         <input 
-                          type="number"
-                          step="0.01"
-                          value={itemForm.price}
-                          onChange={(e) => setItemForm(prev => ({ ...prev, price: e.target.value }))}
-                          className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
-                          placeholder="280.00"
+                          type="text"
+                          value={itemForm.name}
+                          onChange={(e) => setItemForm(prev => ({ ...prev, name: e.target.value }))}
+                          className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-850 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm transition"
+                          placeholder="e.g., Mutton Biryani"
                           required
                         />
                       </div>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-zinc-500 mb-1">Price (₹) *</label>
+                          <input 
+                            type="number"
+                            step="0.01"
+                            value={itemForm.price}
+                            onChange={(e) => setItemForm(prev => ({ ...prev, price: e.target.value }))}
+                            className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-850 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm transition"
+                            placeholder="280.00"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-zinc-500 mb-1">Category *</label>
+                          <select
+                            value={itemForm.category_id}
+                            onChange={(e) => setItemForm(prev => ({ ...prev, category_id: e.target.value }))}
+                            className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-850 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm transition"
+                            required
+                          >
+                            <option value="">-- Choose --</option>
+                            {categories.map(c => (
+                              <option key={c.id} value={c.id}>{c.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
                       <div>
-                        <label className="block text-zinc-500 mb-1">Category *</label>
-                        <select
-                          value={itemForm.category_id}
-                          onChange={(e) => setItemForm(prev => ({ ...prev, category_id: e.target.value }))}
-                          className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
-                          required
-                        >
-                          <option value="">-- Choose --</option>
-                          {categories.map(c => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
-                          ))}
-                        </select>
+                        <label className="block text-zinc-500 mb-1">Description</label>
+                        <textarea 
+                          value={itemForm.description}
+                          onChange={(e) => setItemForm(prev => ({ ...prev, description: e.target.value }))}
+                          rows="2"
+                          className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-850 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm transition"
+                          placeholder="Detailed dish description..."
+                        />
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-zinc-500 mb-1">Image Upload / URL</label>
-                      <div className="flex space-x-2">
-                        <input 
-                          type="text"
-                          value={itemForm.image_url}
-                          onChange={(e) => setItemForm(prev => ({ ...prev, image_url: e.target.value }))}
-                          className="flex-1 px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-xs"
-                          placeholder="HTTP Image Link"
-                        />
-                        <label className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 cursor-pointer rounded-xl border border-zinc-700 text-zinc-300 flex items-center justify-center transition">
-                          <Upload size={14} className={uploading ? 'animate-spin' : ''} />
-                          <input 
-                            type="file" 
-                            accept="image/*" 
-                            className="hidden" 
-                            onChange={(e) => handleImageUpload(e, (url) => setItemForm(prev => ({ ...prev, image_url: url })))}
-                          />
-                        </label>
+                    {/* GROUP 2: Media Management */}
+                    <div className="space-y-3">
+                      <p className="text-[10px] uppercase font-bold tracking-wider text-gold/80 font-mono">2. Dish Image</p>
+                      
+                      <div className="flex border-b border-zinc-900 mb-2">
+                        <button
+                          type="button"
+                          onClick={() => setDishUploadType('file')}
+                          className={`flex-1 py-1.5 text-center font-bold tracking-wider border-b-2 text-[10px] uppercase transition ${dishUploadType === 'file' ? 'border-gold text-white' : 'border-transparent text-zinc-500 hover:text-zinc-300'}`}
+                        >
+                          Upload File
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDishUploadType('url')}
+                          className={`flex-1 py-1.5 text-center font-bold tracking-wider border-b-2 text-[10px] uppercase transition ${dishUploadType === 'url' ? 'border-gold text-white' : 'border-transparent text-zinc-500 hover:text-zinc-300'}`}
+                        >
+                          Image URL
+                        </button>
                       </div>
+
+                      {dishUploadType === 'file' ? (
+                        <div className="space-y-2">
+                          <label className="flex flex-col items-center justify-center border-2 border-dashed border-zinc-800 hover:border-gold/30 rounded-xl p-4 cursor-pointer text-center bg-zinc-900/20 transition group">
+                            <Upload size={16} className={`text-zinc-500 group-hover:text-gold transition ${uploading ? 'animate-spin' : ''}`} />
+                            <span className="text-[10px] text-zinc-400 font-medium mt-1.5">Click to choose image file</span>
+                            <span className="text-[8px] text-zinc-650 mt-0.5">JPG, JPEG, PNG, or WEBP</span>
+                            <input 
+                              type="file" 
+                              accept="image/jpeg,image/jpg,image/png,image/webp" 
+                              className="hidden" 
+                              onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (!file) return;
+                                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+                                if (!allowedTypes.includes(file.type)) {
+                                  setDishFileError('Supported files are JPG, JPEG, PNG, or WEBP');
+                                  return;
+                                }
+                                setDishFileError('');
+                                handleImageUpload(e, (url) => setItemForm(prev => ({ ...prev, image_url: url })));
+                              }}
+                            />
+                          </label>
+                          {dishFileError && <p className="text-red-400 text-[9px] font-medium">{dishFileError}</p>}
+                        </div>
+                      ) : (
+                        <div>
+                          <input 
+                            type="text"
+                            value={itemForm.image_url}
+                            onChange={(e) => setItemForm(prev => ({ ...prev, image_url: e.target.value }))}
+                            className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-850 focus:border-gold/50 focus:outline-none rounded-xl text-white text-xs transition"
+                            placeholder="e.g., https://images.unsplash.com/..."
+                          />
+                        </div>
+                      )}
+
                       {itemForm.image_url && (
-                        <div className="mt-2 relative w-16 h-16 rounded border border-zinc-800 overflow-hidden bg-zinc-900">
-                          <img src={itemForm.image_url} className="w-full h-full object-cover" alt="" />
-                          <button type="button" onClick={() => setItemForm(prev => ({ ...prev, image_url: '' }))} className="absolute inset-0 bg-black/60 flex items-center justify-center text-white opacity-0 hover:opacity-100 transition-opacity">✕</button>
+                        <div className="flex items-center space-x-3 p-2 bg-zinc-900/20 border border-zinc-850 rounded-xl">
+                          <div className="relative w-12 h-12 rounded overflow-hidden bg-zinc-950 border border-zinc-800 shrink-0">
+                            <img src={itemForm.image_url} className="w-full h-full object-cover" alt="" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[10px] text-zinc-400 truncate font-mono">{itemForm.image_url}</p>
+                            <button 
+                              type="button" 
+                              onClick={() => setItemForm(prev => ({ ...prev, image_url: '' }))} 
+                              className="text-[9px] text-red-400 hover:text-red-300 font-bold transition mt-0.5"
+                            >
+                              Clear Image
+                            </button>
+                          </div>
                         </div>
                       )}
                     </div>
 
-                    <div>
-                      <label className="block text-zinc-500 mb-1">Description</label>
-                      <textarea 
-                        value={itemForm.description}
-                        onChange={(e) => setItemForm(prev => ({ ...prev, description: e.target.value }))}
-                        rows="2"
-                        className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
-                        placeholder="Detailed dish description..."
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 pt-1">
-                      <div>
-                        <label className="block text-zinc-500 mb-1">Status</label>
-                        <select
-                          value={itemForm.status}
-                          onChange={(e) => setItemForm(prev => ({ ...prev, status: e.target.value }))}
-                          className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
-                        >
-                          <option value="visible">Visible</option>
-                          <option value="hidden">Hidden</option>
-                        </select>
+                    {/* GROUP 3: Visibility & Settings */}
+                    <div className="space-y-3">
+                      <p className="text-[10px] uppercase font-bold tracking-wider text-gold/80 font-mono">3. Visibility & Order</p>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-zinc-500 mb-1">Status</label>
+                          <select
+                            value={itemForm.status}
+                            onChange={(e) => setItemForm(prev => ({ ...prev, status: e.target.value }))}
+                            className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-850 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm transition"
+                          >
+                            <option value="visible">Visible</option>
+                            <option value="hidden">Hidden</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-zinc-500 mb-1">Display Order</label>
+                          <input 
+                            type="number"
+                            value={itemForm.display_order}
+                            onChange={(e) => setItemForm(prev => ({ ...prev, display_order: parseInt(e.target.value) || 0 }))}
+                            className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-850 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm transition"
+                            placeholder="0"
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-zinc-500 mb-1">Display Order</label>
+
+                      <div className="flex items-center space-x-2 pt-1">
                         <input 
-                          type="number"
-                          value={itemForm.display_order}
-                          onChange={(e) => setItemForm(prev => ({ ...prev, display_order: parseInt(e.target.value) || 0 }))}
-                          className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
-                          placeholder="0"
+                          type="checkbox"
+                          id="is_popular"
+                          checked={!!itemForm.is_popular}
+                          onChange={(e) => setItemForm(prev => ({ ...prev, is_popular: e.target.checked }))}
+                          className="rounded border-zinc-800 text-gold focus:ring-gold/50 bg-zinc-900/60 w-4 h-4 cursor-pointer"
                         />
+                        <label htmlFor="is_popular" className="text-zinc-400 select-none cursor-pointer hover:text-white transition-colors">
+                          Mark as Popular / Featured Dish
+                        </label>
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-2 pt-1 pb-2">
-                      <input 
-                        type="checkbox"
-                        id="is_popular"
-                        checked={!!itemForm.is_popular}
-                        onChange={(e) => setItemForm(prev => ({ ...prev, is_popular: e.target.checked }))}
-                        className="rounded border-zinc-800 text-gold focus:ring-gold/50 bg-zinc-900/60 w-4 h-4 cursor-pointer"
-                      />
-                      <label htmlFor="is_popular" className="text-zinc-400 select-none cursor-pointer hover:text-white transition-colors">
-                        Mark as Popular / Featured Dish
-                      </label>
-                    </div>
-
-
-
-                    <div className="flex space-x-2 pt-2">
+                    {/* Actions */}
+                    <div className="flex space-x-2 pt-2 border-t border-zinc-900">
                       <button 
                         type="submit" 
-                        disabled={actionLoading}
-                        className="flex-1 py-2 bg-gold hover:bg-gold-light text-black text-xs font-bold rounded-lg transition"
+                        disabled={actionLoading || uploading}
+                        className="flex-1 py-2.5 bg-gold hover:bg-gold-light text-black text-xs font-extrabold uppercase tracking-wider rounded-xl transition shadow-gold disabled:opacity-50 flex items-center justify-center space-x-1.5"
                       >
-                        {itemForm.isEdit ? 'Save Changes' : 'Create Dish'}
+                        {actionLoading ? (
+                          <>
+                            <RefreshCw size={12} className="animate-spin" />
+                            <span>Saving...</span>
+                          </>
+                        ) : uploading ? (
+                          <>
+                            <RefreshCw size={12} className="animate-spin" />
+                            <span>Uploading Image...</span>
+                          </>
+                        ) : (
+                          <span>{itemForm.isEdit ? 'Save Changes' : 'Create Dish'}</span>
+                        )}
                       </button>
                       {itemForm.isEdit && (
                         <button 
                           type="button" 
                           onClick={() => setItemForm({ name: '', price: '', category_id: '', description: '', image_url: '', status: 'visible', is_popular: false, display_order: 0, isEdit: false, id: null })}
-                          className="px-3 py-2 border border-zinc-800 hover:bg-zinc-900 text-zinc-400 text-xs font-semibold rounded-lg transition"
+                          className="px-4 py-2.5 border border-zinc-800 hover:bg-zinc-900 text-zinc-400 text-xs font-semibold rounded-xl transition"
                         >
                           Cancel
                         </button>
@@ -981,6 +1380,8 @@ export default function AdminDashboard({
                     </div>
                   </form>
                 </div>
+
+
 
                 {/* Right List: Menu items list */}
                 <div className="glass-panel p-6 rounded-2xl lg:col-span-2 space-y-4">
@@ -1036,7 +1437,7 @@ export default function AdminDashboard({
                               <td className="py-3 flex items-center space-x-3">
                                 <div className="w-10 h-10 rounded overflow-hidden bg-zinc-900 border border-zinc-800 flex-shrink-0">
                                   {item.image_url ? (
-                                    <img src={item.image_url} className="w-full h-full object-cover" alt="" />
+                                    <img src={`${item.image_url}${item.image_url.includes('?') ? '&' : '?'}t=${item.updated_at ? new Date(item.updated_at).getTime() : (item.created_at ? new Date(item.created_at).getTime() : '')}`} className="w-full h-full object-cover" alt="" />
                                   ) : (
                                     <div className="w-full h-full flex items-center justify-center text-[10px] text-zinc-700">No Img</div>
                                   )}
@@ -1344,53 +1745,161 @@ export default function AdminDashboard({
           {/* ============================================================== */}
           {activeTab === 'gallery' && (
             <div className="space-y-8">
-              
-              {/* Add New Gallery Image */}
-              <div className="glass-panel p-6 rounded-2xl space-y-4">
+               {/* Add New Gallery Image */}
+              <div className="glass-panel p-6 rounded-2xl space-y-5">
                 <h3 className="text-sm font-bold text-white font-serif tracking-wide border-b border-zinc-900 pb-3">Upload New Gallery Photo</h3>
-                <form onSubmit={handleGallerySubmit} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end text-xs">
-                  <div className="md:col-span-2">
-                    <label className="block text-zinc-500 mb-1">Photo Upload / URL</label>
-                    <div className="flex space-x-2">
-                      <input 
-                        type="text"
-                        value={galleryForm.image_url}
-                        onChange={(e) => setGalleryForm(prev => ({ ...prev, image_url: e.target.value }))}
-                        className="flex-1 px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-xs"
-                        placeholder="Image Link"
-                      />
-                      <label className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 cursor-pointer rounded-xl border border-zinc-700 text-zinc-300 flex items-center justify-center transition">
-                        <Upload size={14} />
-                        <input 
-                          type="file" 
-                          accept="image/*" 
-                          className="hidden" 
-                          onChange={(e) => handleImageUpload(e, (url) => setGalleryForm(prev => ({ ...prev, image_url: url })))}
-                        />
-                      </label>
+                
+                {/* Method Selector Tabs */}
+                <div className="flex space-x-2 border-b border-zinc-900/50 pb-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setGalleryUploadType('file');
+                      setGalleryForm(prev => ({ ...prev, image_url: '' }));
+                      setGalleryFileError('');
+                    }}
+                    className={`px-4 py-1.5 rounded-lg border text-[11px] font-mono uppercase tracking-wider font-semibold transition-all
+                      ${galleryUploadType === 'file' 
+                        ? 'border-gold text-gold bg-gold/5 font-bold shadow-sm' 
+                        : 'border-zinc-800 text-zinc-500 hover:text-white hover:border-zinc-700'
+                      }
+                    `}
+                  >
+                    Upload from Device
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setGalleryUploadType('url');
+                      setGalleryForm(prev => ({ ...prev, image_url: '' }));
+                      setGalleryFileError('');
+                    }}
+                    className={`px-4 py-1.5 rounded-lg border text-[11px] font-mono uppercase tracking-wider font-semibold transition-all
+                      ${galleryUploadType === 'url' 
+                        ? 'border-gold text-gold bg-gold/5 font-bold shadow-sm' 
+                        : 'border-zinc-800 text-zinc-500 hover:text-white hover:border-zinc-700'
+                      }
+                    `}
+                  >
+                    Use Image Link / URL
+                  </button>
+                </div>
+
+                <form onSubmit={handleGallerySubmit} className="space-y-4 text-xs">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+                    
+                    {/* Method Content */}
+                    <div className="md:col-span-2">
+                      {galleryUploadType === 'file' ? (
+                        <div className="space-y-2">
+                          <label className="block text-zinc-500 mb-1 font-semibold">Choose Image File</label>
+                          <div className="flex flex-col space-y-2">
+                            <div className="flex items-center space-x-3">
+                              <label className="px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 cursor-pointer rounded-xl border border-zinc-700 text-zinc-300 font-bold flex items-center justify-center transition space-x-2">
+                                <Upload size={14} />
+                                <span>Select Photo</span>
+                                <input 
+                                  type="file" 
+                                  accept="image/jpeg,image/jpg,image/png,image/webp" 
+                                  className="hidden" 
+                                  onChange={async (e) => {
+                                    const file = e.target.files[0];
+                                    if (!file) return;
+                                    
+                                    // Reset error
+                                    setGalleryFileError('');
+                                    
+                                    // Validate file type
+                                    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+                                    if (!allowedTypes.includes(file.type)) {
+                                      setGalleryFileError('Unsupported file type. Please upload a JPG, JPEG, PNG, or WEBP image.');
+                                      setGalleryForm(prev => ({ ...prev, image_url: '' }));
+                                      return;
+                                    }
+                                    
+                                    try {
+                                      setUploading(true);
+                                      const res = await api.uploadImage(file);
+                                      if (res.success) {
+                                        setGalleryForm(prev => ({ ...prev, image_url: res.file_path }));
+                                        triggerSuccess('Photo uploaded successfully!');
+                                      }
+                                    } catch (err) {
+                                      console.error(err);
+                                      setGalleryFileError('Upload failed: ' + err.message);
+                                    } finally {
+                                      setUploading(false);
+                                    }
+                                  }}
+                                />
+                              </label>
+                              
+                              <span className="text-zinc-500 font-mono text-[11px] truncate max-w-[200px]">
+                                {galleryForm.image_url ? "Image uploaded" : "No file selected"}
+                              </span>
+                            </div>
+                            
+                            {/* Validation Error Message */}
+                            {galleryFileError && (
+                              <p className="text-red-400 text-[11px] font-semibold bg-red-950/20 border border-red-500/10 px-3 py-1.5 rounded-lg">
+                                {galleryFileError}
+                              </p>
+                            )}
+
+                            {/* Uploading loading state */}
+                            {uploading && (
+                              <div className="flex items-center space-x-2 text-gold py-1">
+                                <div className="w-3.5 h-3.5 border border-gold border-t-transparent rounded-full animate-spin"></div>
+                                <span className="text-[10px] font-semibold">Uploading to server...</span>
+                              </div>
+                            )}
+
+                            {/* Preview */}
+                            {galleryForm.image_url && (
+                              <div className="mt-2 relative w-32 h-20 rounded-lg overflow-hidden border border-zinc-800 bg-zinc-950/50">
+                                <img src={galleryForm.image_url} className="w-full h-full object-cover" alt="Preview" />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <label className="block text-zinc-500 mb-1 font-semibold">Image Link / URL</label>
+                          <input 
+                            type="text"
+                            value={galleryForm.image_url}
+                            onChange={(e) => setGalleryForm(prev => ({ ...prev, image_url: e.target.value }))}
+                            className="w-full px-3 py-2.5 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-xs"
+                            placeholder="https://images.unsplash.com/photo-..."
+                          />
+                        </div>
+                      )}
                     </div>
+
+                    {/* Category Selection */}
+                    <div>
+                      <label className="block text-zinc-500 mb-1 font-semibold">Photo Category</label>
+                      <select 
+                        value={galleryForm.category}
+                        onChange={(e) => setGalleryForm(prev => ({ ...prev, category: e.target.value }))}
+                        className="w-full px-3 py-2.5 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                      >
+                        <option value="Food">Food Photography</option>
+                        <option value="Ambience">Ambience & Decor</option>
+                        <option value="Family Dining">Family Dining</option>
+                      </select>
+                    </div>
+
                   </div>
 
-                  <div>
-                    <label className="block text-zinc-500 mb-1">Photo Category</label>
-                    <select 
-                      value={galleryForm.category}
-                      onChange={(e) => setGalleryForm(prev => ({ ...prev, category: e.target.value }))}
-                      className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
-                    >
-                      <option value="Food">Food Photography</option>
-                      <option value="Ambience">Ambience & Decor</option>
-                      <option value="Family Dining">Family Dining</option>
-                    </select>
-                  </div>
-
-                  <div>
+                  {/* Submit Button */}
+                  <div className="flex justify-end pt-2">
                     <button 
                       type="submit" 
-                      disabled={actionLoading}
-                      className="w-full py-2.5 bg-gold hover:bg-gold-light text-black text-xs font-bold rounded-lg transition"
+                      disabled={actionLoading || uploading}
+                      className="px-6 py-2.5 bg-gold hover:bg-gold-light text-black text-xs font-bold rounded-xl transition shadow-md disabled:opacity-50"
                     >
-                      Add to Gallery
+                      {actionLoading ? 'Adding...' : 'Add to Gallery'}
                     </button>
                   </div>
                 </form>
@@ -1524,7 +2033,8 @@ export default function AdminDashboard({
           {/* TAB: HERO CUSTOMIZATION */}
           {/* ============================================================== */}
           {activeTab === 'hero' && (
-            <div className="max-w-3xl">
+            <div className="max-w-3xl space-y-6">
+              {/* Card 1: Main Hero Banner Settings */}
               <div className="glass-panel p-6 rounded-2xl space-y-6">
                 <h3 className="text-base font-bold text-white font-serif tracking-wide border-b border-zinc-900 pb-3">Edit Main Hero Banner details</h3>
                 <form onSubmit={handleHeroSubmit} className="space-y-4 text-xs">
@@ -1589,6 +2099,163 @@ export default function AdminDashboard({
                     >
                       <Save size={14} />
                       <span>Save Hero Section Settings</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Card 2: Today's Special Management */}
+              <div className="glass-panel p-6 rounded-2xl space-y-6">
+                <h3 className="text-base font-bold text-white font-serif tracking-wide border-b border-zinc-900 pb-3 flex items-center space-x-2">
+                  <Flame size={18} className="text-gold animate-pulse" />
+                  <span>Today's Special Management</span>
+                </h3>
+
+                <form onSubmit={handleTodaysSpecialSubmit} className="space-y-6 text-xs">
+                  <div>
+                    <label className="block text-zinc-500 mb-1 font-semibold text-sm">Today's Special Dish Name</label>
+                    <input 
+                      type="text"
+                      value={todaysSpecialForm.dish_name}
+                      onChange={(e) => setTodaysSpecialForm(prev => ({ ...prev, dish_name: e.target.value }))}
+                      className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                      placeholder="e.g., Chicken Dum Biryani"
+                      required
+                    />
+                  </div>
+
+                  {/* Image Upload/URL Selection */}
+                  <div className="space-y-4">
+                    <label className="block text-zinc-500 font-semibold text-sm">Image Upload Options</label>
+                    <div className="flex space-x-6 mb-2">
+                      <label className="flex items-center space-x-2 text-white cursor-pointer select-none">
+                        <input 
+                          type="radio" 
+                          name="specialUploadType" 
+                          value="file" 
+                          checked={specialUploadType === 'file'}
+                          onChange={() => setSpecialUploadType('file')}
+                          className="accent-gold h-4 w-4"
+                        />
+                        <span className="text-xs font-medium">Upload from Device</span>
+                      </label>
+                      <label className="flex items-center space-x-2 text-white cursor-pointer select-none">
+                        <input 
+                          type="radio" 
+                          name="specialUploadType" 
+                          value="url" 
+                          checked={specialUploadType === 'url'}
+                          onChange={() => setSpecialUploadType('url')}
+                          className="accent-gold h-4 w-4"
+                        />
+                        <span className="text-xs font-medium">Image URL</span>
+                      </label>
+                    </div>
+
+                    {specialUploadType === 'file' ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-3">
+                          <label className="px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 cursor-pointer rounded-xl border border-zinc-700 text-zinc-300 flex items-center justify-center space-x-2 transition">
+                            <Upload size={14} />
+                            <span className="text-xs font-semibold">Choose Image File</span>
+                            <input 
+                              type="file" 
+                              accept="image/png, image/jpeg, image/jpg, image/webp" 
+                              className="hidden" 
+                              onChange={handleSpecialFileChange}
+                            />
+                          </label>
+                          {uploading && (
+                            <div className="flex items-center space-x-1.5 text-zinc-400">
+                              <RefreshCw size={14} className="animate-spin text-gold" />
+                              <span>Uploading image...</span>
+                            </div>
+                          )}
+                        </div>
+                        {specialFileError && (
+                          <p className="text-red-500 text-xs font-semibold mt-1">{specialFileError}</p>
+                        )}
+                        <p className="text-[10px] text-zinc-500 font-light">Supported formats: JPG, JPEG, PNG, WEBP</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <input 
+                          type="url"
+                          value={todaysSpecialForm.dish_image}
+                          onChange={handleSpecialUrlChange}
+                          className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                          placeholder="Paste a valid image URL (e.g., https://example.com/dish.jpg)"
+                        />
+                        {specialUrlError && (
+                          <p className="text-red-500 text-xs font-semibold mt-1">{specialUrlError}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Previews side-by-side */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-zinc-950/40 p-5 rounded-2xl border border-zinc-900">
+                    <div className="flex flex-col items-center justify-center text-center p-2">
+                      <span className="block text-zinc-500 mb-3 font-medium text-xs">Current Live View</span>
+                      <div className="relative group w-48 h-48 rounded-full border border-gold/10 p-3 bg-gold/2">
+                        <div className="w-full h-full rounded-full overflow-hidden border-2 border-gold/30 shadow-2xl relative">
+                          <img 
+                            src={heroSection.todays_special_image || "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=800&q=80"} 
+                            className="w-full h-full object-cover animate-[spin_80s_linear_infinite]"
+                            alt={heroSection.todays_special_name || "Signature Dum Biryani"} 
+                          />
+                          <div className="absolute inset-0 bg-black/10"></div>
+                        </div>
+                        <div className="absolute bottom-2 right-2 glass-panel px-3 py-1.5 rounded-lg text-left border-l-2 border-gold max-w-[130px]">
+                          <p className="text-[8px] text-gold font-bold uppercase tracking-wider">Today's Special</p>
+                          <p className="text-white text-[10px] font-bold truncate">{heroSection.todays_special_name || "Chicken Dum Biryani"}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col items-center justify-center text-center p-2">
+                      <span className="block text-zinc-500 mb-3 font-medium text-xs">New Preview (Unsaved)</span>
+                      <div className="relative group w-48 h-48 rounded-full border border-gold/10 p-3 bg-gold/2">
+                        <div className="w-full h-full rounded-full overflow-hidden border-2 border-gold/30 shadow-2xl relative bg-zinc-900/60 flex items-center justify-center">
+                          {todaysSpecialForm.dish_image ? (
+                            <img 
+                              src={todaysSpecialForm.dish_image} 
+                              className="w-full h-full object-cover animate-[spin_80s_linear_infinite]"
+                              alt={todaysSpecialForm.dish_name || "New Dish Live Preview"} 
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <span className="text-zinc-600 text-xs text-center px-4">No Image Selected</span>
+                          )}
+                          <div className="absolute inset-0 bg-black/10"></div>
+                        </div>
+                        <div className="absolute bottom-2 right-2 glass-panel px-3 py-1.5 rounded-lg text-left border-l-2 border-gold max-w-[130px]">
+                          <p className="text-[8px] text-gold font-bold uppercase tracking-wider">Today's Special</p>
+                          <p className="text-white text-[10px] font-bold truncate">{todaysSpecialForm.dish_name || "Dish Name"}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-zinc-900">
+                    <button 
+                      type="submit" 
+                      disabled={actionLoading || uploading}
+                      className="w-full md:w-fit px-8 py-3 bg-gold hover:bg-gold-light text-black text-xs font-bold rounded-xl transition flex items-center justify-center space-x-1.5 shadow-gold disabled:opacity-50"
+                    >
+                      {actionLoading ? (
+                        <>
+                          <RefreshCw size={14} className="animate-spin" />
+                          <span>Saving Changes...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save size={14} />
+                          <span>Save Changes</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </form>
@@ -1859,16 +2526,6 @@ export default function AdminDashboard({
                             <td className="py-3 text-right">
                               <div className="flex items-center justify-end space-x-1.5">
                                 <select 
-                                  value={o.order_status} 
-                                  onChange={(e) => handleUpdateOrderStatus(o.id, e.target.value)}
-                                  className="bg-zinc-900 border border-zinc-800 rounded px-1.5 py-1 text-[10px] text-white focus:outline-none"
-                                >
-                                  <option value="Pending">Pending</option>
-                                  <option value="Completed">Completed</option>
-                                  <option value="Cancelled">Cancelled</option>
-                                </select>
-                                
-                                <select 
                                   value={o.payment_status} 
                                   onChange={(e) => handleUpdatePaymentStatus(o.id, e.target.value)}
                                   className="bg-zinc-900 border border-zinc-800 rounded px-1.5 py-1 text-[10px] text-white focus:outline-none"
@@ -1876,6 +2533,16 @@ export default function AdminDashboard({
                                   <option value="Pending">Pending</option>
                                   <option value="Paid">Paid</option>
                                   <option value="Failed">Failed</option>
+                                </select>
+                                
+                                <select 
+                                  value={o.order_status} 
+                                  onChange={(e) => handleUpdateOrderStatus(o.id, e.target.value)}
+                                  className="bg-zinc-900 border border-zinc-800 rounded px-1.5 py-1 text-[10px] text-white focus:outline-none"
+                                >
+                                  <option value="Pending">Pending</option>
+                                  <option value="Completed">Completed</option>
+                                  <option value="Cancelled">Cancelled</option>
                                 </select>
                               </div>
                             </td>
