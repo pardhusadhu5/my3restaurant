@@ -29,6 +29,13 @@ export default function AdminLogin({ onLogin, isAdmin }) {
       return;
     }
 
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(username)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
     try {
       setLoading(true);
       setError('');
@@ -93,13 +100,14 @@ export default function AdminLogin({ onLogin, isAdmin }) {
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label className="block text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-2">Username / Email</label>
+                <label className="block text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-2">Email Address</label>
                 <input
-                  type="text"
+                  type="email"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none text-white text-sm transition"
-                  placeholder="e.g., admin"
+                  placeholder="e.g., joelramireddy@gmail.com"
+                  required
                 />
               </div>
 

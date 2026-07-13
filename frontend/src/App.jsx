@@ -274,7 +274,7 @@ export default function App() {
     setAdminUser(null);
     setOrders([]);
     setDiscounts([]);
-    window.location.hash = '#/';
+    window.location.hash = '#/login';
   };
 
   // Render Routes

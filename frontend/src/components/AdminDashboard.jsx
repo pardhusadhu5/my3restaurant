@@ -744,7 +744,7 @@ export default function AdminDashboard({
 
       {/* --- SIDEBAR --- */}
       <aside className={`
-        fixed inset-y-0 left-0 z-40 w-64 bg-[#0a0a0c] border-r border-zinc-900 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:flex lg:flex-col
+        fixed inset-y-0 left-0 z-40 w-72 bg-[#0a0a0c] border-r border-zinc-900 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:flex lg:flex-col
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
 
       `}>
@@ -763,7 +763,7 @@ export default function AdminDashboard({
               <button
                 key={m.id}
                 onClick={() => { setActiveTab(m.id); setIsSidebarOpen(false); }}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium tracking-wide transition-all duration-200
+                className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-[13px] font-medium tracking-wide transition-all duration-200
                   ${activeTab === m.id 
                     ? 'bg-gold/10 text-gold border-l-2 border-gold font-bold shadow-sm' 
                     : 'text-zinc-400 hover:bg-zinc-900/60 hover:text-white'
@@ -789,7 +789,7 @@ export default function AdminDashboard({
           </div>
           <button 
             onClick={() => { setIsSidebarOpen(false); onLogout(); }}
-            className="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-xl border border-red-500/10 text-red-400 hover:bg-red-950/15 transition-colors text-sm font-semibold"
+            className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl border border-red-500/10 text-red-400 hover:bg-red-950/15 transition-colors text-[13px] font-semibold"
 
           >
             <LogOut size={16} />
