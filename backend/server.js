@@ -7,6 +7,7 @@ const db = require('./db');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 require('dotenv').config();
+const { cloudinary, isCloudinaryConfigured, getMulterStorage } = require('./cloudinaryConfig');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -42,7 +43,7 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({
-  storage: storage,
+  storage: getMulterStorage(storage),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter: (req, file, cb) => {
     const filetypes = /jpeg|jpg|png|webp|gif/;
@@ -54,6 +55,52 @@ const upload = multer({
     cb(new Error('Only images (jpg, jpeg, png, webp, gif) are allowed!'));
   }
 });
+
+// Unified image deletion helper for both local files and Cloudinary assets
+const deleteOldImage = async (imageUrl) => {
+  if (!imageUrl) return;
+
+  // Case 1: Local upload
+  if (imageUrl.includes('/uploads/')) {
+    try {
+      const filename = imageUrl.split('/uploads/')[1];
+      if (filename) {
+        const oldFilePath = path.join(uploadsDir, filename);
+        if (fs.existsSync(oldFilePath)) {
+          fs.unlinkSync(oldFilePath);
+          console.log(`Deleted local file: ${filename}`);
+        }
+      }
+    } catch (err) {
+      console.error(`Failed to delete local file:`, err.message);
+    }
+  } 
+  // Case 2: Cloudinary upload
+  else if (imageUrl.includes('res.cloudinary.com') && isCloudinaryConfigured) {
+    try {
+      // Extract public_id from Cloudinary URL
+      const parts = imageUrl.split('/image/upload/');
+      if (parts.length > 1) {
+        const pathPart = parts[1]; // v12345/folder/public_id.jpg
+        const pathParts = pathPart.split('/');
+        // Remove version part if present
+        if (pathParts[0].startsWith('v')) {
+          pathParts.shift();
+        }
+        // Join remaining parts and remove extension
+        const fullPublicIdWithExt = pathParts.join('/'); // folder/public_id.jpg
+        const lastDot = fullPublicIdWithExt.lastIndexOf('.');
+        const publicId = lastDot > -1 ? fullPublicIdWithExt.substring(0, lastDot) : fullPublicIdWithExt;
+        
+        console.log(`Attempting to delete Cloudinary image: ${publicId}`);
+        await cloudinary.uploader.destroy(publicId);
+        console.log(`Deleted Cloudinary asset: ${publicId}`);
+      }
+    } catch (err) {
+      console.error(`Failed to delete Cloudinary asset:`, err.message);
+    }
+  }
+};
 
 // --- REALTIME SSE SYSTEM ---
 let clients = [];
@@ -325,23 +372,9 @@ app.put('/api/hero-section', requireAuth, async (req, res) => {
   const oldHero = await db.getHeroSection();
   const updated = await db.updateHeroSection(req.body);
   
-  // Clean up old Today's Special image file if replaced and it was a local upload
+  // Clean up old Today's Special image if replaced
   if (oldHero && oldHero.todays_special_image && oldHero.todays_special_image !== updated.todays_special_image) {
-    const isLocalUpload = oldHero.todays_special_image.includes('/uploads/');
-    if (isLocalUpload) {
-      try {
-        const filename = oldHero.todays_special_image.split('/uploads/')[1];
-        if (filename) {
-          const oldFilePath = path.join(uploadsDir, filename);
-          if (fs.existsSync(oldFilePath)) {
-            fs.unlinkSync(oldFilePath);
-            console.log(`Deleted replaced old Today's Special image: ${filename}`);
-          }
-        }
-      } catch (err) {
-        console.error(`Failed to delete old Today's Special image:`, err.message);
-      }
-    }
+    await deleteOldImage(oldHero.todays_special_image);
   }
 
   broadcast('hero_section', updated);
@@ -408,23 +441,9 @@ app.put('/api/menu-items/:id', requireAuth, async (req, res) => {
   const item = await db.updateMenuItem(req.params.id, req.body);
   if (!item) return res.status(404).json({ error: 'Menu item not found' });
 
-  // Clean up old image if replaced and it was a local upload
+  // Clean up old image if replaced
   if (oldItem && oldItem.image_url && oldItem.image_url !== item.image_url) {
-    const isLocalUpload = oldItem.image_url.includes('/uploads/');
-    if (isLocalUpload) {
-      try {
-        const filename = oldItem.image_url.split('/uploads/')[1];
-        if (filename) {
-          const oldFilePath = path.join(uploadsDir, filename);
-          if (fs.existsSync(oldFilePath)) {
-            fs.unlinkSync(oldFilePath);
-            console.log(`Deleted replaced old menu item image: ${filename}`);
-          }
-        }
-      } catch (err) {
-        console.error(`Failed to delete old menu item image:`, err.message);
-      }
-    }
+    await deleteOldImage(oldItem.image_url);
   }
 
   broadcast('menu_items', { action: 'update', item });
@@ -435,23 +454,9 @@ app.delete('/api/menu-items/:id', requireAuth, async (req, res) => {
   const oldItem = await db.getMenuItemById(req.params.id);
   await db.deleteMenuItem(req.params.id);
 
-  // Clean up image if it was a local upload
+  // Clean up image
   if (oldItem && oldItem.image_url) {
-    const isLocalUpload = oldItem.image_url.includes('/uploads/');
-    if (isLocalUpload) {
-      try {
-        const filename = oldItem.image_url.split('/uploads/')[1];
-        if (filename) {
-          const oldFilePath = path.join(uploadsDir, filename);
-          if (fs.existsSync(oldFilePath)) {
-            fs.unlinkSync(oldFilePath);
-            console.log(`Deleted menu item image on deletion: ${filename}`);
-          }
-        }
-      } catch (err) {
-        console.error(`Failed to delete menu item image on deletion:`, err.message);
-      }
-    }
+    await deleteOldImage(oldItem.image_url);
   }
 
   broadcast('menu_items', { action: 'delete', id: req.params.id });
@@ -628,12 +633,16 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'Please select an image file to upload.' });
   }
-  // Construct the local static file URL
-  const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+  
+  // Use Cloudinary URL if available, otherwise construct local URL
+  const fileUrl = (req.file.path && req.file.path.startsWith('http'))
+    ? req.file.path
+    : `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    
   res.status(201).json({
     success: true,
     file_path: fileUrl,
-    filename: req.file.filename
+    filename: req.file.filename || req.file.public_id || ''
   });
 });
 
