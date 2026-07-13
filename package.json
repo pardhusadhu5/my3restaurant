@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "Mythri Family Restaurant - Full Stack Application",
   "scripts": {
-    "install:backend": "cd backend && npm install",
-    "install:frontend": "cd frontend && npm install",
+    "install:backend": "cd backend && npm install --legacy-peer-deps",
+    "install:frontend": "cd frontend && npm install --legacy-peer-deps",
     "build:frontend": "cd frontend && npm run build",
     "build": "npm run install:backend && npm run install:frontend && npm run build:frontend",
     "start": "cd backend && npm start"
