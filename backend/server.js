@@ -661,8 +661,31 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
   });
 });
 
-app.get('/api/status', (req, res) => {
-  res.json({ status: 'online', mode: 'postgres' });
+app.get('/api/status', async (req, res) => {
+  let dbStatus = 'disconnected';
+  let dbError = null;
+  try {
+    if (db.usePostgres && db.usePostgres()) {
+      const pool = require('./dbConfig');
+      if (pool) {
+        await pool.query('SELECT 1');
+        dbStatus = 'connected (Postgres)';
+      }
+    } else {
+      dbStatus = 'connected (Mock Local DB)';
+    }
+  } catch (err) {
+    dbStatus = 'error';
+    dbError = err.message;
+  }
+
+  res.json({
+    status: 'online',
+    database: dbStatus,
+    db_error: dbError,
+    environment: process.env.NODE_ENV || 'development',
+    has_db_url: !!process.env.DATABASE_URL
+  });
 });
 
 // Serve static files from the React frontend build

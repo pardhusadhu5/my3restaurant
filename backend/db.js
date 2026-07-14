@@ -109,13 +109,16 @@ async function initializeDatabase() {
 
     if (!tableExists) {
       console.log('Database tables not found. Running schema.sql initialization...');
-      const schemaPath = path.join(__dirname, '../schema.sql');
+      let schemaPath = path.join(__dirname, '../schema.sql');
+      if (!fs.existsSync(schemaPath)) {
+        schemaPath = path.join(__dirname, 'schema.sql');
+      }
       if (fs.existsSync(schemaPath)) {
         const schemaSql = fs.readFileSync(schemaPath, 'utf8');
         await pool.query(schemaSql);
         console.log('Database schema initialized and seeded successfully in Neon PostgreSQL!');
       } else {
-        console.warn('Warning: schema.sql file not found at', schemaPath);
+        console.warn('Warning: schema.sql file not found.');
       }
     } else {
       console.log('Database tables verified successfully.');
@@ -153,6 +156,7 @@ async function insertRow(table, record) {
 }
 
 const db = {
+  usePostgres,
   hashPassword,
 
   // --- WEBSITE SETTINGS ---
