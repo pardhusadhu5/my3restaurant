@@ -1047,7 +1047,8 @@ const db = {
   async adminEmailExists(email) {
     const local = readLocalDB();
     return local.admins && local.admins.some(a => a.email && a.email.toLowerCase() === email.toLowerCase());
-  }
+  },
+  hashPassword
 };
 
 module.exports = db;

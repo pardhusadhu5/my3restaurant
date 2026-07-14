@@ -174,8 +174,9 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // Helper: send password reset email
-async function sendResetEmail(email, token, expiresAt) {
-  const resetLink = `http://localhost:5173/#/reset-password?token=${token}`;
+async function sendResetEmail(email, token, expiresAt, req) {
+  const origin = (req && req.get('origin')) || (req && `${req.protocol}://${req.get('host')}`) || 'http://localhost:5173';
+  const resetLink = `${origin}/#/reset-password?token=${token}`;
   const expiryTimeStr = new Date(expiresAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const expiryDateStr = new Date(expiresAt).toLocaleDateString();
   
@@ -262,7 +263,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
       const expiresAt = new Date(Date.now() + 3600000).toISOString(); // 1 hour expiry
       
       await db.createPasswordResetToken(email, token, expiresAt);
-      await sendResetEmail(email, token, expiresAt);
+      await sendResetEmail(email, token, expiresAt, req);
     } else {
       console.log(`Forgot password request for unregistered email: ${email} (Generic success message returned).`);
     }
@@ -307,8 +308,7 @@ app.post('/api/auth/reset-password', async (req, res) => {
       return res.status(400).json({ error: 'This password reset link is invalid or has expired.' });
     }
 
-    const salt = 'mythri_restaurant_salt_2026';
-    const hashedPassword = crypto.createHmac('sha256', salt).update(password).digest('hex');
+    const hashedPassword = db.hashPassword(password);
 
     // Update in database
     const success = await db.updateAdminPassword(resetEntry.email, hashedPassword);
