@@ -14,16 +14,46 @@ const getHeaders = () => {
 export const api = {
   // Auth
   async login(username, password) {
-    const res = await fetch(`${API_BASE}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || 'Login failed');
+    let res;
+    try {
+      res = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+    } catch (networkErr) {
+      throw new Error('Unable to communicate with the server. Please try again.');
     }
-    return res.json();
+
+    if (!res) {
+      throw new Error('Unable to communicate with the server. Please try again.');
+    }
+
+    const contentType = res.headers.get('content-type');
+    const isJson = contentType && contentType.includes('application/json');
+
+    if (!res.ok) {
+      if (isJson) {
+        try {
+          const err = await res.json();
+          throw new Error(err.message || err.error || 'Login failed');
+        } catch (jsonErr) {
+          throw new Error('Unable to communicate with the server. Please try again.');
+        }
+      } else {
+        throw new Error('Unable to communicate with the server. Please try again.');
+      }
+    }
+
+    if (isJson) {
+      try {
+        return await res.json();
+      } catch (jsonErr) {
+        throw new Error('Unable to communicate with the server. Please try again.');
+      }
+    } else {
+      throw new Error('Unable to communicate with the server. Please try again.');
+    }
   },
 
   // Website Settings

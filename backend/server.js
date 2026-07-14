@@ -159,17 +159,32 @@ const requireAuth = async (req, res, next) => {
 
 // --- API ROUTES ---
 
-// Auth Route
 app.post('/api/auth/login', async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) {
-    return res.status(400).json({ error: 'Username and password are required' });
-  }
-  const result = await db.authenticateAdmin(username, password);
-  if (result.success) {
-    res.json({ token: result.token, user: result.user });
-  } else {
-    res.status(401).json({ error: result.message || 'Invalid credentials' });
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ success: false, message: 'Username and password are required' });
+    }
+    const result = await db.authenticateAdmin(username, password);
+    if (result.success) {
+      res.json({
+        success: true,
+        message: 'Login successful',
+        token: result.token,
+        user: result.user
+      });
+    } else {
+      res.status(401).json({
+        success: false,
+        message: result.message || 'Invalid email or password'
+      });
+    }
+  } catch (err) {
+    console.error('Error in login API:', err.message);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
   }
 });
 
