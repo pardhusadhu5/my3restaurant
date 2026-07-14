@@ -27,8 +27,44 @@ async function ensureAdminSeeded() {
   }
 }
 
+// Initialize database schema and seed admin
+const fs = require('fs');
+const path = require('path');
+
+async function initializeDatabase() {
+  try {
+    const checkTableQuery = `
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'website_settings'
+      );
+    `;
+    const res = await pool.query(checkTableQuery);
+    const tableExists = res.rows[0].exists;
+
+    if (!tableExists) {
+      console.log('Database tables not found. Running schema.sql initialization...');
+      const schemaPath = path.join(__dirname, '../schema.sql');
+      if (fs.existsSync(schemaPath)) {
+        const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+        await pool.query(schemaSql);
+        console.log('Database schema initialized and seeded successfully in Neon PostgreSQL!');
+      } else {
+        console.warn('Warning: schema.sql file not found at', schemaPath);
+      }
+    } else {
+      console.log('Database tables verified successfully.');
+    }
+  } catch (err) {
+    console.error('Error verifying/initializing database schema:', err.message);
+  }
+  
+  await ensureAdminSeeded();
+}
+
 // Invoke on boot
-ensureAdminSeeded();
+initializeDatabase();
 
 // Dynamic Helpers for SQL Operations
 async function updateRow(table, id, updates, idColumn = 'id') {
