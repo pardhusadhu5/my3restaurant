@@ -56,6 +56,8 @@ async function initializeDatabase() {
     } else {
       console.log('Database tables verified successfully.');
     }
+    // Run schema migrations/alterations if tables exist
+    await pool.query('ALTER TABLE menu_categories ADD COLUMN IF NOT EXISTS image_url TEXT');
   } catch (err) {
     console.error('Error verifying/initializing database schema:', err.message);
   }
@@ -189,6 +191,7 @@ const db = {
     const cleanUpdates = {};
     if (updates.name !== undefined) cleanUpdates.name = updates.name;
     if (updates.display_order !== undefined) cleanUpdates.display_order = parseInt(updates.display_order) || 0;
+    if (updates.image_url !== undefined) cleanUpdates.image_url = updates.image_url;
     return await updateRow('menu_categories', id, cleanUpdates);
   },
 

@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS menu_categories (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
     display_order INTEGER DEFAULT 0,
+    image_url TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -409,5 +410,6 @@ ALTER TABLE website_settings ADD COLUMN IF NOT EXISTS first_order_min_amount NUM
 ALTER TABLE website_settings ADD COLUMN IF NOT EXISTS first_order_discount_amount NUMERIC(10, 2) DEFAULT 100.00;
 
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS first_order_discount_reason TEXT;
+ALTER TABLE menu_categories ADD COLUMN IF NOT EXISTS image_url TEXT;
 
 
