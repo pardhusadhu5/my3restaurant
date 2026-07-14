@@ -646,9 +646,8 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
   });
 });
 
-// Server status check
 app.get('/api/status', (req, res) => {
-  res.json({ status: 'online', mode: db.useSupabase ? 'supabase' : 'mock-fallback' });
+  res.json({ status: 'online', mode: 'postgres' });
 });
 
 // Serve static files from the React frontend build
