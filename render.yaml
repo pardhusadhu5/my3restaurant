@@ -17,3 +17,13 @@ services:
       - key: SUPABASE_KEY
         sync: false
         description: "Your Supabase anon public key"
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+        description: "Your Cloudinary Cloud Name"
+      - key: CLOUDINARY_API_KEY
+        sync: false
+        description: "Your Cloudinary API Key"
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+        description: "Your Cloudinary API Secret"
+
