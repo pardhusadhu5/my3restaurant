@@ -1,5 +1,5 @@
-// API Client Service Layer for Mythri Restaurant website
 const API_BASE = import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api');
+console.log('Mythri Family Restaurant API Client initialized. API Base URL:', API_BASE);
 
 
 // Helper to get auth header
