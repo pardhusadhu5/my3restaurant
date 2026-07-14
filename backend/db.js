@@ -1,5 +1,7 @@
 const pool = require('./dbConfig');
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 
 // Password hashing helper
 function hashPassword(password) {
@@ -7,8 +9,73 @@ function hashPassword(password) {
   return crypto.createHmac('sha256', salt).update(password).digest('hex');
 }
 
-// Seed admin on boot
+const usePostgres = () => pool !== null;
+
+// --- LOCAL MOCK DATABASE FALLBACK LAYER ---
+const dbPath = path.join(__dirname, 'db.json');
+let localDB = null;
+
+if (!usePostgres()) {
+  if (fs.existsSync(dbPath)) {
+    try {
+      localDB = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+    } catch (e) {
+      console.error('Failed to parse local db.json:', e.message);
+    }
+  }
+  if (!localDB) {
+    const seedsPath = path.join(__dirname, 'seeds.json');
+    try {
+      localDB = JSON.parse(fs.readFileSync(seedsPath, 'utf8'));
+      fs.writeFileSync(dbPath, JSON.stringify(localDB, null, 2), 'utf8');
+      console.log('Local db.json initialized from seeds.json');
+    } catch (err) {
+      console.error('Failed to load seeds.json, using default schema:', err.message);
+      const targetHash = '2a72532749481a79c750aeb1a3179fdf91f8fbbd62246697dbc546be660a1d31';
+      localDB = {
+        website_settings: { status: "online", theme: "dark", first_order_discount_enabled: true, first_order_min_amount: 250, first_order_discount_amount: 100 },
+        restaurant_settings: {},
+        contact_information: {},
+        hero_section: {},
+        qr_codes: {},
+        admins: [{ username: "My3", password: targetHash, email: "joelramireddy@gmail.com", name: "Joel" }],
+        menu_categories: [],
+        menu_items: [],
+        gallery_images: [],
+        reviews: [],
+        orders: [],
+        first_order_discounts: [],
+        customer_first_order_uses: [],
+        customers: []
+      };
+      fs.writeFileSync(dbPath, JSON.stringify(localDB, null, 2), 'utf8');
+    }
+  }
+
+  // Ensure default admin in mock db
+  const targetHash = '2a72532749481a79c750aeb1a3179fdf91f8fbbd62246697dbc546be660a1d31';
+  if (!localDB.admins) localDB.admins = [];
+  const hasCorrectAdmin = localDB.admins.some(a => a.username === 'My3' && a.email === 'joelramireddy@gmail.com' && a.password === targetHash);
+  if (!hasCorrectAdmin) {
+    localDB.admins = localDB.admins.filter(a => a.username !== 'My3' && a.email !== 'joelramireddy@gmail.com');
+    localDB.admins.push({ username: "My3", password: targetHash, email: "joelramireddy@gmail.com", name: "Joel" });
+    fs.writeFileSync(dbPath, JSON.stringify(localDB, null, 2), 'utf8');
+  }
+}
+
+function saveLocalDB() {
+  if (!usePostgres() && localDB) {
+    try {
+      fs.writeFileSync(dbPath, JSON.stringify(localDB, null, 2), 'utf8');
+    } catch (e) {
+      console.error('Failed to write db.json:', e.message);
+    }
+  }
+}
+
+// Seed admin on boot in Postgres
 async function ensureAdminSeeded() {
+  if (!usePostgres()) return;
   const targetHash = '2a72532749481a79c750aeb1a3179fdf91f8fbbd62246697dbc546be660a1d31';
   try {
     const res = await pool.query('SELECT * FROM admins WHERE username = $1 OR email = $2', ['My3', 'joelramireddy@gmail.com']);
@@ -27,11 +94,8 @@ async function ensureAdminSeeded() {
   }
 }
 
-// Initialize database schema and seed admin
-const fs = require('fs');
-const path = require('path');
-
 async function initializeDatabase() {
+  if (!usePostgres()) return;
   try {
     const checkTableQuery = `
       SELECT EXISTS (
@@ -93,8 +157,11 @@ const db = {
 
   // --- WEBSITE SETTINGS ---
   async getWebsiteSettings() {
-    const res = await pool.query('SELECT * FROM website_settings WHERE id = 1');
-    return res.rows[0] || { status: 'online', theme: 'dark' };
+    if (usePostgres()) {
+      const res = await pool.query('SELECT * FROM website_settings WHERE id = 1');
+      return res.rows[0] || { status: 'online', theme: 'dark' };
+    }
+    return localDB.website_settings || { status: 'online', theme: 'dark' };
   },
 
   async updateWebsiteSettings(settings) {
@@ -107,13 +174,22 @@ const db = {
     if (settings.first_order_min_amount !== undefined) updates.first_order_min_amount = parseFloat(settings.first_order_min_amount) || 0;
     if (settings.first_order_discount_amount !== undefined) updates.first_order_discount_amount = parseFloat(settings.first_order_discount_amount) || 0;
     updates.updated_at = new Date().toISOString();
-    return await updateRow('website_settings', 1, updates);
+
+    if (usePostgres()) {
+      return await updateRow('website_settings', 1, updates);
+    }
+    localDB.website_settings = { ...localDB.website_settings, ...updates };
+    saveLocalDB();
+    return localDB.website_settings;
   },
 
   // --- RESTAURANT INFO ---
   async getRestaurantSettings() {
-    const res = await pool.query('SELECT * FROM restaurant_settings WHERE id = 1');
-    return res.rows[0] || {};
+    if (usePostgres()) {
+      const res = await pool.query('SELECT * FROM restaurant_settings WHERE id = 1');
+      return res.rows[0] || {};
+    }
+    return localDB.restaurant_settings || {};
   },
 
   async updateRestaurantSettings(settings) {
@@ -125,25 +201,43 @@ const db = {
     if (updates.social_media_links && typeof updates.social_media_links === 'object') {
       updates.social_media_links = JSON.stringify(updates.social_media_links);
     }
-    return await updateRow('restaurant_settings', 1, updates);
+
+    if (usePostgres()) {
+      return await updateRow('restaurant_settings', 1, updates);
+    }
+    localDB.restaurant_settings = { ...localDB.restaurant_settings, ...updates };
+    saveLocalDB();
+    return localDB.restaurant_settings;
   },
 
   // --- CONTACT INFO ---
   async getContactInformation() {
-    const res = await pool.query('SELECT * FROM contact_information WHERE id = 1');
-    return res.rows[0] || {};
+    if (usePostgres()) {
+      const res = await pool.query('SELECT * FROM contact_information WHERE id = 1');
+      return res.rows[0] || {};
+    }
+    return localDB.contact_information || {};
   },
 
   async updateContactInformation(contact) {
     const updates = { ...contact, updated_at: new Date().toISOString() };
     delete updates.id;
-    return await updateRow('contact_information', 1, updates);
+
+    if (usePostgres()) {
+      return await updateRow('contact_information', 1, updates);
+    }
+    localDB.contact_information = { ...localDB.contact_information, ...updates };
+    saveLocalDB();
+    return localDB.contact_information;
   },
 
   // --- HERO SECTION ---
   async getHeroSection() {
-    const res = await pool.query('SELECT * FROM hero_section WHERE id = 1');
-    return res.rows[0] || {};
+    if (usePostgres()) {
+      const res = await pool.query('SELECT * FROM hero_section WHERE id = 1');
+      return res.rows[0] || {};
+    }
+    return localDB.hero_section || {};
   },
 
   async updateHeroSection(hero) {
@@ -155,25 +249,43 @@ const db = {
     if (updates.badges && typeof updates.badges === 'object') {
       updates.badges = JSON.stringify(updates.badges);
     }
-    return await updateRow('hero_section', 1, updates);
+
+    if (usePostgres()) {
+      return await updateRow('hero_section', 1, updates);
+    }
+    localDB.hero_section = { ...localDB.hero_section, ...updates };
+    saveLocalDB();
+    return localDB.hero_section;
   },
 
   // --- QR CODES ---
   async getQRCode() {
-    const res = await pool.query('SELECT * FROM qr_codes WHERE id = 1');
-    return res.rows[0] || { qr_image_url: null, destination_url: '' };
+    if (usePostgres()) {
+      const res = await pool.query('SELECT * FROM qr_codes WHERE id = 1');
+      return res.rows[0] || { qr_image_url: null, destination_url: '' };
+    }
+    return localDB.qr_codes || { qr_image_url: null, destination_url: '' };
   },
 
   async updateQRCode(qr) {
     const updates = { ...qr, updated_at: new Date().toISOString() };
     delete updates.id;
-    return await updateRow('qr_codes', 1, updates);
+
+    if (usePostgres()) {
+      return await updateRow('qr_codes', 1, updates);
+    }
+    localDB.qr_codes = { ...localDB.qr_codes, ...updates };
+    saveLocalDB();
+    return localDB.qr_codes;
   },
 
   // --- MENU CATEGORIES ---
   async getCategories() {
-    const res = await pool.query('SELECT * FROM menu_categories ORDER BY display_order ASC');
-    return res.rows;
+    if (usePostgres()) {
+      const res = await pool.query('SELECT * FROM menu_categories ORDER BY display_order ASC');
+      return res.rows;
+    }
+    return (localDB.menu_categories || []).sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
   },
 
   async addCategory(name, displayOrder = 0) {
@@ -182,9 +294,17 @@ const db = {
       id,
       name,
       display_order: parseInt(displayOrder) || 0,
+      image_url: null,
       created_at: new Date().toISOString()
     };
-    return await insertRow('menu_categories', record);
+
+    if (usePostgres()) {
+      return await insertRow('menu_categories', record);
+    }
+    if (!localDB.menu_categories) localDB.menu_categories = [];
+    localDB.menu_categories.push(record);
+    saveLocalDB();
+    return record;
   },
 
   async updateCategory(id, updates) {
@@ -192,23 +312,50 @@ const db = {
     if (updates.name !== undefined) cleanUpdates.name = updates.name;
     if (updates.display_order !== undefined) cleanUpdates.display_order = parseInt(updates.display_order) || 0;
     if (updates.image_url !== undefined) cleanUpdates.image_url = updates.image_url;
-    return await updateRow('menu_categories', id, cleanUpdates);
+
+    if (usePostgres()) {
+      return await updateRow('menu_categories', id, cleanUpdates);
+    }
+    if (!localDB.menu_categories) localDB.menu_categories = [];
+    const index = localDB.menu_categories.findIndex(c => c.id === id);
+    if (index > -1) {
+      localDB.menu_categories[index] = { ...localDB.menu_categories[index], ...cleanUpdates };
+      saveLocalDB();
+      return localDB.menu_categories[index];
+    }
+    return null;
   },
 
   async deleteCategory(id) {
-    await pool.query('DELETE FROM menu_categories WHERE id = $1', [id]);
+    if (usePostgres()) {
+      await pool.query('DELETE FROM menu_categories WHERE id = $1', [id]);
+      return true;
+    }
+    if (localDB.menu_categories) {
+      localDB.menu_categories = localDB.menu_categories.filter(c => c.id !== id);
+    }
+    if (localDB.menu_items) {
+      localDB.menu_items = localDB.menu_items.filter(i => i.category_id !== id);
+    }
+    saveLocalDB();
     return true;
   },
 
   // --- MENU ITEMS ---
   async getMenuItemById(id) {
-    const res = await pool.query('SELECT * FROM menu_items WHERE id = $1', [id]);
-    return res.rows[0] || null;
+    if (usePostgres()) {
+      const res = await pool.query('SELECT * FROM menu_items WHERE id = $1', [id]);
+      return res.rows[0] || null;
+    }
+    return (localDB.menu_items || []).find(i => i.id === id) || null;
   },
 
   async getMenuItems() {
-    const res = await pool.query('SELECT * FROM menu_items ORDER BY display_order ASC');
-    return res.rows;
+    if (usePostgres()) {
+      const res = await pool.query('SELECT * FROM menu_items ORDER BY display_order ASC');
+      return res.rows;
+    }
+    return (localDB.menu_items || []).sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
   },
 
   async addMenuItem(item) {
@@ -226,7 +373,14 @@ const db = {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
-    return await insertRow('menu_items', record);
+
+    if (usePostgres()) {
+      return await insertRow('menu_items', record);
+    }
+    if (!localDB.menu_items) localDB.menu_items = [];
+    localDB.menu_items.push(record);
+    saveLocalDB();
+    return record;
   },
 
   async updateMenuItem(id, updates) {
@@ -240,18 +394,39 @@ const db = {
     if (updates.is_popular !== undefined) cleanUpdates.is_popular = updates.is_popular === true || updates.is_popular === 'true';
     if (updates.display_order !== undefined) cleanUpdates.display_order = parseInt(updates.display_order) || 0;
     cleanUpdates.updated_at = new Date().toISOString();
-    return await updateRow('menu_items', id, cleanUpdates);
+
+    if (usePostgres()) {
+      return await updateRow('menu_items', id, cleanUpdates);
+    }
+    if (!localDB.menu_items) localDB.menu_items = [];
+    const index = localDB.menu_items.findIndex(i => i.id === id);
+    if (index > -1) {
+      localDB.menu_items[index] = { ...localDB.menu_items[index], ...cleanUpdates };
+      saveLocalDB();
+      return localDB.menu_items[index];
+    }
+    return null;
   },
 
   async deleteMenuItem(id) {
-    await pool.query('DELETE FROM menu_items WHERE id = $1', [id]);
+    if (usePostgres()) {
+      await pool.query('DELETE FROM menu_items WHERE id = $1', [id]);
+      return true;
+    }
+    if (localDB.menu_items) {
+      localDB.menu_items = localDB.menu_items.filter(i => i.id !== id);
+    }
+    saveLocalDB();
     return true;
   },
 
   // --- GALLERY IMAGES ---
   async getGalleryImages() {
-    const res = await pool.query('SELECT * FROM gallery_images ORDER BY display_order ASC');
-    return res.rows;
+    if (usePostgres()) {
+      const res = await pool.query('SELECT * FROM gallery_images ORDER BY display_order ASC');
+      return res.rows;
+    }
+    return (localDB.gallery_images || []).sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
   },
 
   async addGalleryImage(image_url, category = 'Food', displayOrder = 0) {
@@ -263,18 +438,35 @@ const db = {
       display_order: parseInt(displayOrder) || 0,
       created_at: new Date().toISOString()
     };
-    return await insertRow('gallery_images', record);
+
+    if (usePostgres()) {
+      return await insertRow('gallery_images', record);
+    }
+    if (!localDB.gallery_images) localDB.gallery_images = [];
+    localDB.gallery_images.push(record);
+    saveLocalDB();
+    return record;
   },
 
   async deleteGalleryImage(id) {
-    await pool.query('DELETE FROM gallery_images WHERE id = $1', [id]);
+    if (usePostgres()) {
+      await pool.query('DELETE FROM gallery_images WHERE id = $1', [id]);
+      return true;
+    }
+    if (localDB.gallery_images) {
+      localDB.gallery_images = localDB.gallery_images.filter(g => g.id !== id);
+    }
+    saveLocalDB();
     return true;
   },
 
   // --- CUSTOMER REVIEWS ---
   async getReviews() {
-    const res = await pool.query('SELECT * FROM reviews ORDER BY created_at DESC');
-    return res.rows;
+    if (usePostgres()) {
+      const res = await pool.query('SELECT * FROM reviews ORDER BY created_at DESC');
+      return res.rows;
+    }
+    return (localDB.reviews || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   },
 
   async addReview(review) {
@@ -288,7 +480,14 @@ const db = {
       status: review.status || 'visible',
       created_at: new Date().toISOString()
     };
-    return await insertRow('reviews', record);
+
+    if (usePostgres()) {
+      return await insertRow('reviews', record);
+    }
+    if (!localDB.reviews) localDB.reviews = [];
+    localDB.reviews.push(record);
+    saveLocalDB();
+    return record;
   },
 
   async updateReview(id, updates) {
@@ -298,22 +497,56 @@ const db = {
     if (updates.rating !== undefined) cleanUpdates.rating = parseInt(updates.rating) || 5;
     if (updates.photo_url !== undefined) cleanUpdates.photo_url = updates.photo_url;
     if (updates.status !== undefined) cleanUpdates.status = updates.status;
-    return await updateRow('reviews', id, cleanUpdates);
+
+    if (usePostgres()) {
+      return await updateRow('reviews', id, cleanUpdates);
+    }
+    if (!localDB.reviews) localDB.reviews = [];
+    const index = localDB.reviews.findIndex(r => r.id === id);
+    if (index > -1) {
+      localDB.reviews[index] = { ...localDB.reviews[index], ...cleanUpdates };
+      saveLocalDB();
+      return localDB.reviews[index];
+    }
+    return null;
   },
 
   async deleteReview(id) {
-    await pool.query('DELETE FROM reviews WHERE id = $1', [id]);
+    if (usePostgres()) {
+      await pool.query('DELETE FROM reviews WHERE id = $1', [id]);
+      return true;
+    }
+    if (localDB.reviews) {
+      localDB.reviews = localDB.reviews.filter(r => r.id !== id);
+    }
+    saveLocalDB();
     return true;
   },
 
   // --- ADMIN AUTHENTICATION ---
   async authenticateAdmin(username, password) {
     const inputHash = hashPassword(password);
-    const res = await pool.query(
-      'SELECT * FROM admins WHERE (LOWER(username) = LOWER($1) OR LOWER(email) = LOWER($1)) AND password = $2',
-      [username, inputHash]
+
+    if (usePostgres()) {
+      const res = await pool.query(
+        'SELECT * FROM admins WHERE (LOWER(username) = LOWER($1) OR LOWER(email) = LOWER($1)) AND password = $2',
+        [username, inputHash]
+      );
+      const foundAdmin = res.rows[0];
+      if (foundAdmin) {
+        return {
+          success: true,
+          user: { email: foundAdmin.email, name: foundAdmin.name || 'Admin', username: foundAdmin.username },
+          token: 'mock-jwt-token-for-mythri-restaurant'
+        };
+      }
+      return { success: false, message: 'Invalid credentials' };
+    }
+
+    const foundAdmin = (localDB.admins || []).find(a => 
+      (a.username.toLowerCase() === username.toLowerCase() || a.email.toLowerCase() === username.toLowerCase()) && 
+      a.password === inputHash
     );
-    const foundAdmin = res.rows[0];
     if (foundAdmin) {
       return {
         success: true,
@@ -326,13 +559,19 @@ const db = {
 
   // --- CUSTOMERS ---
   async getCustomers() {
-    const res = await pool.query('SELECT * FROM customers ORDER BY created_at DESC');
-    return res.rows;
+    if (usePostgres()) {
+      const res = await pool.query('SELECT * FROM customers ORDER BY created_at DESC');
+      return res.rows;
+    }
+    return (localDB.customers || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   },
 
   async getCustomerByPhone(phone) {
-    const res = await pool.query('SELECT * FROM customers WHERE phone_number = $1', [phone]);
-    return res.rows[0] || null;
+    if (usePostgres()) {
+      const res = await pool.query('SELECT * FROM customers WHERE phone_number = $1', [phone]);
+      return res.rows[0] || null;
+    }
+    return (localDB.customers || []).find(c => c.phone_number === phone) || null;
   },
 
   async createCustomer(customer) {
@@ -344,18 +583,37 @@ const db = {
       email: customer.email || null,
       created_at: new Date().toISOString()
     };
-    return await insertRow('customers', record);
+
+    if (usePostgres()) {
+      return await insertRow('customers', record);
+    }
+    if (!localDB.customers) localDB.customers = [];
+    localDB.customers.push(record);
+    saveLocalDB();
+    return record;
   },
 
   // --- DISCOUNTS ---
   async getDiscounts() {
     const now = new Date().toISOString();
-    await pool.query(
-      `UPDATE first_order_discounts SET status = 'Expired' WHERE status = 'Active' AND expiry_date < $1`,
-      [now]
-    );
-    const res = await pool.query('SELECT * FROM first_order_discounts ORDER BY assigned_date DESC');
-    return res.rows;
+    if (usePostgres()) {
+      await pool.query(
+        `UPDATE first_order_discounts SET status = 'Expired' WHERE status = 'Active' AND expiry_date < $1`,
+        [now]
+      );
+      const res = await pool.query('SELECT * FROM first_order_discounts ORDER BY assigned_date DESC');
+      return res.rows;
+    }
+
+    if (localDB.first_order_discounts) {
+      localDB.first_order_discounts.forEach(d => {
+        if (d.status === 'Active' && d.expiry_date && new Date(d.expiry_date) < new Date()) {
+          d.status = 'Expired';
+        }
+      });
+      saveLocalDB();
+    }
+    return (localDB.first_order_discounts || []).sort((a, b) => new Date(b.assigned_date) - new Date(a.assigned_date));
   },
 
   async addDiscount(discount) {
@@ -379,7 +637,14 @@ const db = {
       used_date: null,
       order_id: null
     };
-    return await insertRow('first_order_discounts', record);
+
+    if (usePostgres()) {
+      return await insertRow('first_order_discounts', record);
+    }
+    if (!localDB.first_order_discounts) localDB.first_order_discounts = [];
+    localDB.first_order_discounts.push(record);
+    saveLocalDB();
+    return record;
   },
 
   async updateDiscount(id, updates) {
@@ -388,23 +653,54 @@ const db = {
     if (updates.used_date !== undefined) cleanUpdates.used_date = updates.used_date;
     if (updates.order_id !== undefined) cleanUpdates.order_id = updates.order_id;
     if (updates.notes !== undefined) cleanUpdates.notes = updates.notes;
-    return await updateRow('first_order_discounts', id, cleanUpdates);
+
+    if (usePostgres()) {
+      return await updateRow('first_order_discounts', id, cleanUpdates);
+    }
+    if (!localDB.first_order_discounts) localDB.first_order_discounts = [];
+    const index = localDB.first_order_discounts.findIndex(d => d.id === id);
+    if (index > -1) {
+      localDB.first_order_discounts[index] = { ...localDB.first_order_discounts[index], ...cleanUpdates };
+      saveLocalDB();
+      return localDB.first_order_discounts[index];
+    }
+    return null;
   },
 
   async deleteDiscount(id) {
-    await pool.query('DELETE FROM first_order_discounts WHERE id = $1', [id]);
+    if (usePostgres()) {
+      await pool.query('DELETE FROM first_order_discounts WHERE id = $1', [id]);
+      return true;
+    }
+    if (localDB.first_order_discounts) {
+      localDB.first_order_discounts = localDB.first_order_discounts.filter(d => d.id !== id);
+    }
+    saveLocalDB();
     return true;
   },
 
   async getActiveDiscountByPhone(phone) {
-    const res = await pool.query(
-      `SELECT * FROM first_order_discounts WHERE customer_phone = $1 AND status = 'Active'`,
-      [phone]
-    );
-    const discount = res.rows[0];
+    if (usePostgres()) {
+      const res = await pool.query(
+        `SELECT * FROM first_order_discounts WHERE customer_phone = $1 AND status = 'Active'`,
+        [phone]
+      );
+      const discount = res.rows[0];
+      if (discount) {
+        if (discount.expiry_date && new Date(discount.expiry_date) < new Date()) {
+          await pool.query(`UPDATE first_order_discounts SET status = 'Expired' WHERE id = $1`, [discount.id]);
+          return null;
+        }
+        return discount;
+      }
+      return null;
+    }
+
+    const discount = (localDB.first_order_discounts || []).find(d => d.customer_phone === phone && d.status === 'Active');
     if (discount) {
       if (discount.expiry_date && new Date(discount.expiry_date) < new Date()) {
-        await pool.query(`UPDATE first_order_discounts SET status = 'Expired' WHERE id = $1`, [discount.id]);
+        discount.status = 'Expired';
+        saveLocalDB();
         return null;
       }
       return discount;
@@ -413,41 +709,73 @@ const db = {
   },
 
   async getFirstOrderUseByPhone(phone) {
-    const res = await pool.query('SELECT * FROM customer_first_order_uses WHERE phone_number = $1', [phone]);
-    return res.rows[0] || null;
+    if (usePostgres()) {
+      const res = await pool.query('SELECT * FROM customer_first_order_uses WHERE phone_number = $1', [phone]);
+      return res.rows[0] || null;
+    }
+    return (localDB.customer_first_order_uses || []).find(u => u.phone_number === phone) || null;
   },
 
   async markFirstOrderUse(phone, orderId) {
-    await pool.query(
-      `INSERT INTO customer_first_order_uses (phone_number, first_order_discount_used, discount_applied_at, order_id)
-       VALUES ($1, true, NOW(), $2)
-       ON CONFLICT (phone_number) DO UPDATE
-       SET first_order_discount_used = true, discount_applied_at = NOW(), order_id = $2`,
-      [phone, orderId]
-    );
+    if (usePostgres()) {
+      await pool.query(
+        `INSERT INTO customer_first_order_uses (phone_number, first_order_discount_used, discount_applied_at, order_id)
+         VALUES ($1, true, NOW(), $2)
+         ON CONFLICT (phone_number) DO UPDATE
+         SET first_order_discount_used = true, discount_applied_at = NOW(), order_id = $2`,
+        [phone, orderId]
+      );
+      return;
+    }
+
+    if (!localDB.customer_first_order_uses) localDB.customer_first_order_uses = [];
+    const index = localDB.customer_first_order_uses.findIndex(u => u.phone_number === phone);
+    const record = { phone_number: phone, first_order_discount_used: true, discount_applied_at: new Date().toISOString(), order_id: orderId };
+    if (index > -1) {
+      localDB.customer_first_order_uses[index] = record;
+    } else {
+      localDB.customer_first_order_uses.push(record);
+    }
+    saveLocalDB();
   },
 
   async removeFirstOrderUse(phone) {
-    await pool.query('DELETE FROM customer_first_order_uses WHERE phone_number = $1', [phone]);
+    if (usePostgres()) {
+      await pool.query('DELETE FROM customer_first_order_uses WHERE phone_number = $1', [phone]);
+      return;
+    }
+    if (localDB.customer_first_order_uses) {
+      localDB.customer_first_order_uses = localDB.customer_first_order_uses.filter(u => u.phone_number !== phone);
+      saveLocalDB();
+    }
   },
 
   async getCompletedOrdersByPhone(phone) {
-    const res = await pool.query(
-      `SELECT * FROM orders WHERE customer_phone = $1 AND order_status = 'Completed'`,
-      [phone]
-    );
-    return res.rows;
+    if (usePostgres()) {
+      const res = await pool.query(
+        `SELECT * FROM orders WHERE customer_phone = $1 AND order_status = 'Completed'`,
+        [phone]
+      );
+      return res.rows;
+    }
+    return (localDB.orders || []).filter(o => o.customer_phone === phone && o.order_status === 'Completed');
   },
 
   // --- ORDERS ---
   async getOrders() {
-    const res = await pool.query('SELECT * FROM orders ORDER BY created_at DESC');
-    return res.rows;
+    if (usePostgres()) {
+      const res = await pool.query('SELECT * FROM orders ORDER BY created_at DESC');
+      return res.rows;
+    }
+    return (localDB.orders || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   },
 
   async getOrderById(id) {
-    const res = await pool.query('SELECT * FROM orders WHERE id = $1', [id]);
-    return res.rows[0] || null;
+    if (usePostgres()) {
+      const res = await pool.query('SELECT * FROM orders WHERE id = $1', [id]);
+      return res.rows[0] || null;
+    }
+    return (localDB.orders || []).find(o => o.id === id) || null;
   },
 
   async createOrder(order) {
@@ -529,7 +857,13 @@ const db = {
       await this.markFirstOrderUse(newOrder.customer_phone, id);
     }
 
-    return await insertRow('orders', newOrder);
+    if (usePostgres()) {
+      return await insertRow('orders', newOrder);
+    }
+    if (!localDB.orders) localDB.orders = [];
+    localDB.orders.push(newOrder);
+    saveLocalDB();
+    return newOrder;
   },
 
   async updateOrderStatus(id, updates) {
@@ -566,7 +900,18 @@ const db = {
     const cleanUpdates = {};
     if (updates.payment_status !== undefined) cleanUpdates.payment_status = updates.payment_status;
     if (updates.order_status !== undefined) cleanUpdates.order_status = updates.order_status;
-    return await updateRow('orders', id, cleanUpdates);
+
+    if (usePostgres()) {
+      return await updateRow('orders', id, cleanUpdates);
+    }
+    if (!localDB.orders) localDB.orders = [];
+    const index = localDB.orders.findIndex(o => o.id === id);
+    if (index > -1) {
+      localDB.orders[index] = { ...localDB.orders[index], ...cleanUpdates };
+      saveLocalDB();
+      return localDB.orders[index];
+    }
+    return null;
   },
 
   async checkDiscountEligibility(phone, amount) {
@@ -654,29 +999,65 @@ const db = {
       used: false,
       created_at: new Date().toISOString()
     };
-    return await insertRow('password_resets', record);
+
+    if (usePostgres()) {
+      return await insertRow('password_resets', record);
+    }
+    if (!localDB.password_resets) localDB.password_resets = [];
+    localDB.password_resets.push(record);
+    saveLocalDB();
+    return record;
   },
 
   async getPasswordResetToken(token) {
-    const res = await pool.query('SELECT * FROM password_resets WHERE token = $1', [token]);
-    return res.rows[0] || null;
+    if (usePostgres()) {
+      const res = await pool.query('SELECT * FROM password_resets WHERE token = $1', [token]);
+      return res.rows[0] || null;
+    }
+    return (localDB.password_resets || []).find(r => r.token === token) || null;
   },
 
   async invalidatePasswordResetToken(token) {
-    return await pool.query('UPDATE password_resets SET used = true WHERE token = $1 RETURNING *', [token]);
+    if (usePostgres()) {
+      return await pool.query('UPDATE password_resets SET used = true WHERE token = $1 RETURNING *', [token]);
+    }
+    if (localDB.password_resets) {
+      const index = localDB.password_resets.findIndex(r => r.token === token);
+      if (index > -1) {
+        localDB.password_resets[index].used = true;
+        saveLocalDB();
+        return localDB.password_resets[index];
+      }
+    }
+    return null;
   },
 
   async updateAdminPassword(email, newHashedPassword) {
-    const res = await pool.query(
-      'UPDATE admins SET password = $1 WHERE LOWER(email) = LOWER($2) RETURNING *',
-      [newHashedPassword, email]
-    );
-    return res.rowCount > 0;
+    if (usePostgres()) {
+      const res = await pool.query(
+        'UPDATE admins SET password = $1 WHERE LOWER(email) = LOWER($2) RETURNING *',
+        [newHashedPassword, email]
+      );
+      return res.rowCount > 0;
+    }
+
+    if (localDB.admins) {
+      const admin = localDB.admins.find(a => a.email && a.email.toLowerCase() === email.toLowerCase());
+      if (admin) {
+        admin.password = newHashedPassword;
+        saveLocalDB();
+        return true;
+      }
+    }
+    return false;
   },
 
   async adminEmailExists(email) {
-    const res = await pool.query('SELECT * FROM admins WHERE LOWER(email) = LOWER($1)', [email]);
-    return res.rowCount > 0;
+    if (usePostgres()) {
+      const res = await pool.query('SELECT * FROM admins WHERE LOWER(email) = LOWER($1)', [email]);
+      return res.rowCount > 0;
+    }
+    return (localDB.admins || []).some(a => a.email && a.email.toLowerCase() === email.toLowerCase());
   }
 };
 
