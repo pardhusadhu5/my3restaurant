@@ -101,7 +101,7 @@ async function initializeDatabase() {
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
         WHERE table_schema = 'public' 
-        AND table_name = 'website_settings'
+        AND table_name = 'admins'
       );
     `;
     const res = await pool.query(checkTableQuery);
