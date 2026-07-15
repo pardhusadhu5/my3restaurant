@@ -856,7 +856,7 @@ export default function AdminDashboard({
 
                 <div className="glass-panel p-5 rounded-2xl">
                   <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider">Total Revenue (Paid)</p>
-                  <h3 className="text-3xl font-bold text-gold font-serif mt-2">₹{totalRevenue.toFixed(2)}</h3>
+                  <h3 className="text-3xl font-bold text-gold font-serif mt-2">₹{(Number(totalRevenue) || 0).toFixed(2)}</h3>
                   <div className="text-[10px] text-zinc-400 mt-1">From simulated payments</div>
                 </div>
 
@@ -1453,7 +1453,7 @@ export default function AdminDashboard({
                                 </div>
                               </td>
                               <td className="py-3 text-zinc-400 font-medium">{getCatName(item.category_id)}</td>
-                              <td className="py-3 font-semibold text-white">₹{parseFloat(item.price).toFixed(2)}</td>
+                              <td className="py-3 font-semibold text-white">₹{(Number(item.price) || 0).toFixed(2)}</td>
                               <td className="py-3 text-zinc-400">{item.display_order}</td>
                               <td className="py-3">
                                 <button
@@ -2496,9 +2496,9 @@ export default function AdminDashboard({
                               </div>
                             </td>
                             <td className="py-3">
-                              <span className="font-mono font-bold text-white">₹{o.final_amount.toFixed(2)}</span>
+                              <span className="font-mono font-bold text-white">₹{(Number(o.final_amount) || 0).toFixed(2)}</span>
                               {o.discount_amount > 0 && (
-                                <p className="text-[10px] text-gold font-mono mt-0.5">Discount: -₹{o.discount_amount.toFixed(2)}</p>
+                                <p className="text-[10px] text-gold font-mono mt-0.5">Discount: -₹{(Number(o.discount_amount) || 0).toFixed(2)}</p>
                               )}
                             </td>
                             <td className="py-3">
@@ -2585,7 +2585,7 @@ export default function AdminDashboard({
                 </div>
                 <div className="bg-zinc-900/40 border border-zinc-900 p-4 rounded-xl col-span-2 md:col-span-1">
                   <span className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Value Saved</span>
-                  <span className="text-xl font-bold text-gold font-mono mt-1 block">₹{totalDiscountValueGiven.toFixed(2)}</span>
+                  <span className="text-xl font-bold text-gold font-mono mt-1 block">₹{(Number(totalDiscountValueGiven) || 0).toFixed(2)}</span>
                 </div>
               </div>
 
@@ -3053,7 +3053,7 @@ export default function AdminDashboard({
                               <td className="py-3 text-zinc-400 font-mono">
                                 {new Date(o.created_at).toLocaleDateString()}
                               </td>
-                              <td className="py-3 text-zinc-400 font-mono">₹{o.original_amount.toFixed(2)}</td>
+                              <td className="py-3 text-zinc-400 font-mono">₹{(Number(o.original_amount) || 0).toFixed(2)}</td>
                               <td className="py-3">
                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                                   o.discount_amount > 0 
@@ -3072,7 +3072,7 @@ export default function AdminDashboard({
                                   {isApplied ? 'Used' : 'Not Used'}
                                 </span>
                               </td>
-                              <td className="py-3 text-gold font-mono font-bold">₹{o.final_amount.toFixed(2)}</td>
+                              <td className="py-3 text-gold font-mono font-bold">₹{(Number(o.final_amount) || 0).toFixed(2)}</td>
                               <td className="py-3 text-zinc-400 max-w-[200px] truncate" title={formattedReason}>
                                 {formattedReason}
                               </td>

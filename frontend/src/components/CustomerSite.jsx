@@ -110,7 +110,7 @@ export default function CustomerSite({
   // --- WHATSAPP ORDER URL CREATOR ---
   const triggerWhatsAppOrder = (dishName, price) => {
     const restaurantName = logoText.name || 'Mythri Restaurant';
-    const message = `Hello ${restaurantName},\n\nI would like to order:\nDish Name: ${dishName}\nPrice: ₹${parseFloat(price).toFixed(2)}\n\nPlease confirm availability.`;
+    const message = `Hello ${restaurantName},\n\nI would like to order:\nDish Name: ${dishName}\nPrice: ₹${(Number(price) || 0).toFixed(2)}\n\nPlease confirm availability.`;
     const encodedText = encodeURIComponent(message);
     const url = `https://wa.me/${waNumber}?text=${encodedText}`;
     window.open(url, '_blank');

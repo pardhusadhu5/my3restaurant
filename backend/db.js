@@ -802,7 +802,7 @@ const db = {
       if ((useRecord && useRecord.first_order_discount_used) || orders.length > 0) {
         firstOrderDiscountReason = 'First Order Offer has already been used for this phone number.';
       } else if (finalAmount < firstOrderMinVal) {
-        firstOrderDiscountReason = `Order subtotal (₹${finalAmount.toFixed(2)}) was below the minimum requirement of ₹${firstOrderMinVal.toFixed(2)}.`;
+        firstOrderDiscountReason = `Order subtotal (₹${(Number(finalAmount) || 0).toFixed(2)}) was below the minimum requirement of ₹${(Number(firstOrderMinVal) || 0).toFixed(2)}.`;
       } else {
         discountAmount = Math.min(firstOrderAmt, finalAmount);
         finalAmount -= discountAmount;
@@ -941,7 +941,7 @@ const db = {
           isBelowMinAmount: true,
           minAmount: firstOrderMinVal,
           currentAmount: amount,
-          reason: `Add ₹${(firstOrderMinVal - amount).toFixed(2)} more to unlock your ₹${firstOrderAmt} First Order Discount.`
+          reason: `Add ₹${((Number(firstOrderMinVal) || 0) - (Number(amount) || 0)).toFixed(2)} more to unlock your ₹${firstOrderAmt} First Order Discount.`
         };
       }
 
@@ -949,8 +949,8 @@ const db = {
       return {
         eligible: true,
         isAutomaticFirstOrder: true,
-        discountAmount: parseFloat(discountAmount.toFixed(2)),
-        finalAmount: parseFloat((amount - discountAmount).toFixed(2)),
+        discountAmount: parseFloat((Number(discountAmount) || 0).toFixed(2)),
+        finalAmount: parseFloat(((Number(amount) || 0) - (Number(discountAmount) || 0)).toFixed(2)),
         reason: `🎉 Congratulations! Your first order discount of ₹${firstOrderAmt} has been applied.`,
         minAmount: firstOrderMinVal
       };
@@ -988,8 +988,8 @@ const db = {
     return {
       eligible: true,
       discount,
-      discountAmount: parseFloat(discountAmount.toFixed(2)),
-      finalAmount: parseFloat((amount - discountAmount).toFixed(2)),
+      discountAmount: parseFloat((Number(discountAmount) || 0).toFixed(2)),
+      finalAmount: parseFloat(((Number(amount) || 0) - (Number(discountAmount) || 0)).toFixed(2)),
       reason: '🎉 First-Time Discount Applied!'
     };
   },

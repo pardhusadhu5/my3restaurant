@@ -173,14 +173,14 @@ export default function MenuPage({
     message += `----------------------------------------\n`;
     message += `*Items Ordered:*\n`;
     items.forEach(item => {
-      message += `- ${item.name} x${item.quantity} (₹${(item.price * item.quantity).toFixed(2)})\n`;
+      message += `- ${item.name} x${item.quantity} (₹${(Number(item.price) * Number(item.quantity) || 0).toFixed(2)})\n`;
     });
     message += `----------------------------------------\n`;
-    message += `*Subtotal:* ₹${subtotal.toFixed(2)}\n`;
-    if (discountAmt > 0) {
-      message += `*Discount:* -₹${discountAmt.toFixed(2)}\n`;
+    message += `*Subtotal:* ₹${(Number(subtotal) || 0).toFixed(2)}\n`;
+    if (Number(discountAmt) > 0) {
+      message += `*Discount:* -₹${(Number(discountAmt) || 0).toFixed(2)}\n`;
     }
-    message += `*Final Amount:* ₹${finalTotal.toFixed(2)}\n`;
+    message += `*Final Amount:* ₹${(Number(finalTotal) || 0).toFixed(2)}\n`;
     message += `----------------------------------------\n`;
     message += `*Payment Status:* Cash on Delivery / Pay at Restaurant\n`;
     message += `Thank you for your order! Your receipt is ready.`;
@@ -472,7 +472,7 @@ export default function MenuPage({
                       <div className="w-full h-full flex items-center justify-center text-xs text-zinc-700 uppercase tracking-widest font-bold">Mythri Meal</div>
                     )}
                     <div className="absolute top-3 right-3 px-2 py-0.5 bg-black/80 backdrop-blur rounded text-gold font-bold text-xs border border-gold/15">
-                      ₹{parseFloat(item.price).toFixed(2)}
+                      ₹{(Number(item.price) || 0).toFixed(2)}
                     </div>
                   </div>
                   
@@ -531,7 +531,7 @@ export default function MenuPage({
             </div>
             <div>
               <span className="block text-xs font-bold text-zinc-400">{cartTotalItems} {cartTotalItems === 1 ? 'item' : 'items'}</span>
-              <span className="text-sm font-extrabold text-gold font-mono">₹{cartSubtotal.toFixed(2)}</span>
+              <span className="text-sm font-extrabold text-gold font-mono">₹{(Number(cartSubtotal) || 0).toFixed(2)}</span>
             </div>
           </div>
           <button 
@@ -568,7 +568,7 @@ export default function MenuPage({
             <div key={item.id} className="flex items-center justify-between border-b border-zinc-900/40 pb-4">
               <div className="flex-1 pr-4">
                 <h4 className="text-xs font-bold text-white truncate">{item.name}</h4>
-                <span className="text-[10px] text-zinc-500 font-mono">₹{parseFloat(item.price).toFixed(2)} each</span>
+                <span className="text-[10px] text-zinc-500 font-mono">₹{(Number(item.price) || 0).toFixed(2)} each</span>
               </div>
               <div className="flex items-center space-x-3">
                 <div className="flex items-center space-x-2 bg-zinc-900 border border-zinc-800 rounded-lg px-1.5 py-0.5">
@@ -576,7 +576,7 @@ export default function MenuPage({
                   <span className="text-[11px] font-bold font-mono text-white">{item.quantity}</span>
                   <button onClick={() => handleIncrement(item.id)} className="p-1 hover:text-gold text-zinc-500 transition"><Plus size={10} /></button>
                 </div>
-                <span className="text-xs font-bold text-gold font-mono w-16 text-right">₹{(item.price * item.quantity).toFixed(2)}</span>
+                <span className="text-xs font-bold text-gold font-mono w-16 text-right">₹{(Number(item.price) * Number(item.quantity) || 0).toFixed(2)}</span>
                 <button onClick={() => handleRemove(item.id)} className="text-zinc-600 hover:text-red-500 p-1 transition"><Trash2 size={13} /></button>
               </div>
             </div>
@@ -595,7 +595,7 @@ export default function MenuPage({
           <div className="p-6 border-t border-zinc-900 bg-zinc-950/40 space-y-4">
             <div className="flex justify-between items-center text-xs font-semibold">
               <span className="text-zinc-400">Subtotal:</span>
-              <span className="text-base font-bold text-gold font-mono">₹{cartSubtotal.toFixed(2)}</span>
+              <span className="text-base font-bold text-gold font-mono">₹{(Number(cartSubtotal) || 0).toFixed(2)}</span>
             </div>
             <button 
               onClick={() => { setCartDrawerOpen(false); setCheckoutModalOpen(true); }}
@@ -727,7 +727,7 @@ export default function MenuPage({
                   {cart.map(item => (
                     <div key={item.id} className="flex justify-between text-[11px] text-zinc-400">
                       <span>{item.name} x{item.quantity}</span>
-                      <span className="font-mono">₹{(item.price * item.quantity).toFixed(2)}</span>
+                      <span className="font-mono">₹{(Number(item.price) * Number(item.quantity) || 0).toFixed(2)}</span>
                     </div>
                   ))}
                 </div>
@@ -736,17 +736,17 @@ export default function MenuPage({
                 <div className="space-y-1.5 border-t border-zinc-900 pt-3 text-[11px] font-medium font-mono text-zinc-400">
                   <div className="flex justify-between">
                     <span>Subtotal:</span>
-                    <span>₹{cartSubtotal.toFixed(2)}</span>
+                    <span>₹{(Number(cartSubtotal) || 0).toFixed(2)}</span>
                   </div>
                   {eligibilityResult?.eligible && (
                     <div className="flex justify-between text-gold">
                       <span>First Order Discount:</span>
-                      <span>-₹{eligibilityResult.discountAmount.toFixed(2)}</span>
+                      <span>-₹{(Number(eligibilityResult.discountAmount) || 0).toFixed(2)}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-white font-bold text-xs pt-1.5 border-t border-zinc-900/60">
                     <span>Final Total:</span>
-                    <span className="text-gold">₹{(eligibilityResult?.eligible ? eligibilityResult.finalAmount : cartSubtotal).toFixed(2)}</span>
+                    <span className="text-gold">₹{(eligibilityResult?.eligible ? (Number(eligibilityResult.finalAmount) || 0) : (Number(cartSubtotal) || 0)).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
