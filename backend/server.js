@@ -29,7 +29,19 @@ const PORT = process.env.PORT || 5000;
 
 // Production Middleware
 app.use(helmet({
-  crossOriginResourcePolicy: false // Allow cross-origin images to load
+  crossOriginResourcePolicy: false, // Allow cross-origin images to load
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      "img-src": [
+        "'self'", 
+        "data:", 
+        "https://res.cloudinary.com", 
+        "https://*.cloudinary.com",
+        "https://*.supabase.co"
+      ],
+    },
+  }
 }));
 app.use(compression());
 app.use(cookieParser());
