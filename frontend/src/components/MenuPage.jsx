@@ -65,9 +65,11 @@ export default function MenuPage({
   const [specialInstructions, setSpecialInstructions] = useState('');
   
   // Payment states
-  const [showPaymentQR, setShowPaymentQR] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('Cash on Delivery');
+  const [accountHolderName, setAccountHolderName] = useState('');
+  const [payerMobileNumber, setPayerMobileNumber] = useState('');
+  const [transactionId, setTransactionId] = useState('');
   const [selectedQR, setSelectedQR] = useState(null);
-  const [paymentDone, setPaymentDone] = useState(false);
   const [createdOrder, setCreatedOrder] = useState(null);
 
   // Sync cart to localStorage
@@ -171,8 +173,7 @@ export default function MenuPage({
     setCart(prev => prev.filter(i => i.id !== id));
   };
 
-  // WhatsApp Message Formatter
-  const formatWhatsAppMessage = (orderId, name, phone, items, subtotal, discountAmt, finalTotal, type, address, landmark, instructions, payStatus) => {
+  const formatWhatsAppMessage = (orderId, name, phone, items, subtotal, discountAmt, finalTotal, type, address, landmark, instructions, payMethod, accountName, payerPhone, transId) => {
     const restName = restaurantSettings.name || 'Mythri Family Restaurant';
     let message = `*${restName} - Order Receipt*\n`;
     message += `----------------------------------------\n`;
@@ -202,12 +203,15 @@ export default function MenuPage({
     message += `*Final Amount:* ₹${(Number(finalTotal) || 0).toFixed(2)}\n`;
     message += `----------------------------------------\n`;
     
-    if (type === 'home_delivery' && payStatus === 'Paid via QR') {
-      message += `*Payment Status:* Paid via QR ✅\n`;
-    } else if (type === 'home_delivery') {
-      message += `*Payment Status:* Cash on Delivery 💵\n`;
+    if (type === 'home_delivery') {
+      message += `*Payment Method:* ${payMethod}\n`;
+      if (payMethod === 'Online Payment (QR Code)') {
+        message += `*Account Holder:* ${accountName}\n`;
+        message += `*Payer Mobile:* ${payerPhone}\n`;
+        message += `*Transaction ID:* ${transId || 'Not Provided'}\n`;
+      }
     } else {
-      message += `*Payment Status:* Pay at Restaurant 🍽️\n`;
+      message += `*Payment Method:* Pay at Restaurant 🍽️\n`;
     }
     
     message += `Thank you for your order! Your receipt is ready.`;
@@ -221,9 +225,21 @@ export default function MenuPage({
       return;
     }
 
-    if (orderType === 'home_delivery' && !deliveryAddress) {
-      alert('Please fill in your Delivery Address.');
-      return;
+    if (orderType === 'home_delivery') {
+      if (!deliveryAddress) {
+        alert('Please fill in your Delivery Address.');
+        return;
+      }
+      if (paymentMethod === 'Online Payment (QR Code)') {
+        if (!accountHolderName) {
+          alert('Please provide the Account Holder Name for the payment.');
+          return;
+        }
+        if (!payerMobileNumber) {
+          alert('Please provide the Payer Mobile Number.');
+          return;
+        }
+      }
     }
 
     setCheckoutSubmitting(true);
@@ -231,11 +247,6 @@ export default function MenuPage({
       const discount = eligibilityResult?.eligible ? eligibilityResult.discount : null;
       const discountAmt = eligibilityResult?.eligible ? eligibilityResult.discountAmount : 0;
       const finalAmt = eligibilityResult?.eligible ? eligibilityResult.finalAmount : cartSubtotal;
-
-      let paymentStateText = 'Pending';
-      if (orderType === 'home_delivery' && paymentDone) {
-        paymentStateText = 'Paid via QR';
-      }
 
       const orderData = {
         customer_name: customerName,
@@ -247,13 +258,15 @@ export default function MenuPage({
         discount_amount: discountAmt,
         final_amount: finalAmt,
         is_first_order: eligibilityResult?.eligible ? (eligibilityResult.isAutomaticFirstOrder ? true : !!discount) : false,
-        payment_status: paymentStateText,
         order_status: 'Pending',
-        // Pass extra details (backend might ignore these if not in schema, but good to have)
         order_type: orderType,
-        delivery_address: deliveryAddress,
-        delivery_landmark: deliveryLandmark,
-        special_instructions: specialInstructions
+        delivery_address: orderType === 'home_delivery' ? deliveryAddress : null,
+        delivery_landmark: orderType === 'home_delivery' ? deliveryLandmark : null,
+        special_instructions: orderType === 'home_delivery' ? specialInstructions : null,
+        payment_method: orderType === 'home_delivery' ? paymentMethod : 'Pay at Restaurant',
+        account_holder_name: orderType === 'home_delivery' && paymentMethod === 'Online Payment (QR Code)' ? accountHolderName : null,
+        payer_mobile_number: orderType === 'home_delivery' && paymentMethod === 'Online Payment (QR Code)' ? payerMobileNumber : null,
+        transaction_id: orderType === 'home_delivery' && paymentMethod === 'Online Payment (QR Code)' ? transactionId : null
       };
 
       const order = await api.createOrder(orderData);
@@ -271,7 +284,10 @@ export default function MenuPage({
         deliveryAddress,
         deliveryLandmark,
         specialInstructions,
-        paymentStateText
+        orderData.payment_method,
+        orderData.account_holder_name,
+        orderData.payer_mobile_number,
+        orderData.transaction_id
       );
       
       const url = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
@@ -899,12 +915,9 @@ export default function MenuPage({
                       <div className="flex space-x-3">
                         <button
                           type="button"
-                          onClick={() => {
-                            setShowPaymentQR(true);
-                            setPaymentDone(false);
-                          }}
+                          onClick={() => setPaymentMethod('Online Payment (QR Code)')}
                           className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold uppercase tracking-wider transition border ${
-                            showPaymentQR
+                            paymentMethod === 'Online Payment (QR Code)'
                               ? 'bg-gold/10 border-gold text-gold'
                               : 'bg-zinc-900/60 border-zinc-800 text-zinc-400 hover:bg-zinc-800'
                           }`}
@@ -913,12 +926,9 @@ export default function MenuPage({
                         </button>
                         <button
                           type="button"
-                          onClick={() => {
-                            setShowPaymentQR(false);
-                            setPaymentDone(false);
-                          }}
+                          onClick={() => setPaymentMethod('Cash on Delivery')}
                           className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold uppercase tracking-wider transition border ${
-                            !showPaymentQR
+                            paymentMethod === 'Cash on Delivery'
                               ? 'bg-gold/10 border-gold text-gold'
                               : 'bg-zinc-900/60 border-zinc-800 text-zinc-400 hover:bg-zinc-800'
                           }`}
@@ -927,23 +937,49 @@ export default function MenuPage({
                         </button>
                       </div>
 
-                      {showPaymentQR && (
-                        <div className="flex flex-col items-center justify-center p-4 bg-zinc-900/50 rounded-xl border border-gold/30">
+                      {paymentMethod === 'Online Payment (QR Code)' && (
+                        <div className="flex flex-col items-center p-4 bg-zinc-900/50 rounded-xl border border-gold/30">
                           <p className="text-xs text-zinc-400 mb-3 text-center">Scan this QR code using any UPI app (PhonePe, GPay, Paytm) to pay <span className="font-bold text-gold">₹{(eligibilityResult?.eligible ? eligibilityResult.finalAmount : cartSubtotal).toFixed(2)}</span></p>
                           <img 
                             src={paymentQRs.find(qr => qr.is_active)?.image_url} 
                             alt="Payment QR" 
                             className="w-48 h-48 object-contain bg-white p-2 rounded-xl mb-4"
                           />
-                          <label className="flex items-center space-x-2 cursor-pointer bg-black/40 p-3 rounded-lg border border-zinc-800 w-full justify-center">
-                            <input 
-                              type="checkbox"
-                              checked={paymentDone}
-                              onChange={(e) => setPaymentDone(e.target.checked)}
-                              className="w-4 h-4 rounded text-gold bg-zinc-900 border-zinc-800 focus:ring-gold"
-                            />
-                            <span className="text-white font-bold text-xs uppercase tracking-wide">I have completed the payment</span>
-                          </label>
+                          
+                          <div className="w-full space-y-3 mt-2">
+                            <div>
+                              <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Account Holder Name *</label>
+                              <input 
+                                type="text"
+                                value={accountHolderName}
+                                onChange={(e) => setAccountHolderName(e.target.value)}
+                                placeholder="Name of the person who paid"
+                                className="w-full px-3 py-2 bg-zinc-900/80 border border-zinc-800 focus:border-gold rounded-lg text-white text-xs focus:outline-none"
+                                required
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Payer Mobile Number *</label>
+                              <input 
+                                type="tel"
+                                value={payerMobileNumber}
+                                onChange={(e) => setPayerMobileNumber(e.target.value)}
+                                placeholder="Phone number associated with payment"
+                                className="w-full px-3 py-2 bg-zinc-900/80 border border-zinc-800 focus:border-gold rounded-lg text-white text-xs focus:outline-none"
+                                required
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Transaction ID (Optional)</label>
+                              <input 
+                                type="text"
+                                value={transactionId}
+                                onChange={(e) => setTransactionId(e.target.value)}
+                                placeholder="e.g. T2308945729"
+                                className="w-full px-3 py-2 bg-zinc-900/80 border border-zinc-800 focus:border-gold rounded-lg text-white text-xs focus:outline-none"
+                              />
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -959,16 +995,16 @@ export default function MenuPage({
               <div className="pt-2">
                 <button 
                   onClick={handlePlaceOrder}
-                  disabled={checkoutSubmitting || loadingEligibility || (orderType === 'home_delivery' && showPaymentQR && !paymentDone)}
+                  disabled={
+                    checkoutSubmitting || 
+                    loadingEligibility || 
+                    (orderType === 'home_delivery' && paymentMethod === 'Online Payment (QR Code)' && (!accountHolderName || !payerMobileNumber))
+                  }
                   className="w-full py-3.5 bg-gold hover:bg-gold-light disabled:bg-zinc-800 disabled:text-zinc-600 text-black font-extrabold rounded-xl transition text-xs uppercase tracking-wider shadow-gold-lg flex items-center justify-center space-x-2"
                 >
                   <MessageSquare size={14} />
                   <span>
-                    {checkoutSubmitting 
-                      ? 'Placing Order...' 
-                      : (orderType === 'home_delivery' && showPaymentQR && paymentDone)
-                        ? 'Payment Done, Place Order on WhatsApp'
-                        : 'Place Order on WhatsApp'}
+                    {checkoutSubmitting ? 'Placing Order...' : 'Place Order on WhatsApp'}
                   </span>
                 </button>
               </div>

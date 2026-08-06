@@ -126,6 +126,14 @@ async function initializeDatabase() {
     }
     // Run schema migrations/alterations if tables exist
     await pool.query('ALTER TABLE menu_categories ADD COLUMN IF NOT EXISTS image_url TEXT');
+    await pool.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_type TEXT');
+    await pool.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_address TEXT');
+    await pool.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_landmark TEXT');
+    await pool.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS special_instructions TEXT');
+    await pool.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method TEXT');
+    await pool.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS account_holder_name TEXT');
+    await pool.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS payer_mobile_number TEXT');
+    await pool.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS transaction_id TEXT');
   } catch (err) {
     console.error('Error verifying/initializing database schema:', err.message);
   }
@@ -909,6 +917,14 @@ const db = {
       first_order_discount_reason: firstOrderDiscountReason,
       payment_status: order.payment_status || 'Pending',
       order_status: order.order_status || 'Pending',
+      order_type: order.order_type || null,
+      delivery_address: order.delivery_address || null,
+      delivery_landmark: order.delivery_landmark || null,
+      special_instructions: order.special_instructions || null,
+      payment_method: order.payment_method || null,
+      account_holder_name: order.account_holder_name || null,
+      payer_mobile_number: order.payer_mobile_number || null,
+      transaction_id: order.transaction_id || null,
       created_at: new Date().toISOString()
     };
 

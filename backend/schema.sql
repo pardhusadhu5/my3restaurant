@@ -411,6 +411,14 @@ CREATE TABLE IF NOT EXISTS orders (
     first_order_discount_reason TEXT,
     payment_status TEXT NOT NULL DEFAULT 'Pending', -- 'Pending', 'Paid', 'Failed'
     order_status TEXT NOT NULL DEFAULT 'Pending', -- 'Pending', 'Completed', 'Cancelled'
+    order_type TEXT,
+    delivery_address TEXT,
+    delivery_landmark TEXT,
+    special_instructions TEXT,
+    payment_method TEXT,
+    account_holder_name TEXT,
+    payer_mobile_number TEXT,
+    transaction_id TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

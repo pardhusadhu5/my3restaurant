@@ -308,7 +308,7 @@ export default function AdminDashboard({
   const totalOrdersCount = orders.length;
   const completedOrdersCount = orders.filter(o => o.order_status === 'Completed').length;
   const totalRevenue = orders
-    .filter(o => o.payment_status === 'Paid')
+    .filter(o => o.order_status === 'Completed')
     .reduce((acc, o) => acc + o.final_amount, 0);
 
   // Trigger temporary success notification
@@ -2661,7 +2661,7 @@ export default function AdminDashboard({
                         <th className="py-2.5">Customer Details</th>
                         <th className="py-2.5">Items Ordered</th>
                         <th className="py-2.5">Final Total</th>
-                        <th className="py-2.5">Payment</th>
+                        <th className="py-2.5">Payment Details</th>
                         <th className="py-2.5">Order Status</th>
                         <th className="py-2.5 text-right">Actions</th>
                       </tr>
@@ -2679,8 +2679,15 @@ export default function AdminDashboard({
                           <tr key={o.id} className="border-b border-zinc-900/40 hover:bg-zinc-900/10">
                             <td className="py-3 font-mono font-bold text-white">{o.id}</td>
                             <td className="py-3">
-                              <p className="font-semibold text-white">{o.customer_name}</p>
+                              <p className="font-semibold text-white">{o.customer_name} {o.order_type === 'home_delivery' ? '(Home Delivery)' : '(Dine In)'}</p>
                               <p className="text-[10px] text-zinc-400 font-mono mt-0.5">{o.customer_phone}</p>
+                              {o.order_type === 'home_delivery' && o.delivery_address && (
+                                <div className="mt-2 text-[10px] text-zinc-300">
+                                  <p><span className="text-zinc-500">Address:</span> {o.delivery_address}</p>
+                                  {o.delivery_landmark && <p><span className="text-zinc-500">Landmark:</span> {o.delivery_landmark}</p>}
+                                  {o.special_instructions && <p><span className="text-zinc-500">Note:</span> {o.special_instructions}</p>}
+                                </div>
+                              )}
                               {o.is_first_order && (
                                 <span className="inline-block mt-1 px-1.5 py-0.5 bg-gold/10 border border-gold/15 text-gold text-[8px] font-bold rounded uppercase">
                                   First Order
@@ -2703,15 +2710,20 @@ export default function AdminDashboard({
                               )}
                             </td>
                             <td className="py-3">
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                                o.payment_status === 'Paid'
-                                  ? 'bg-green-500/10 border-green-500/20 text-green-400'
-                                  : o.payment_status === 'Pending'
-                                    ? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
-                                    : 'bg-red-500/10 border-red-500/20 text-red-400'
-                              }`}>
-                                {o.payment_status}
-                              </span>
+                              {o.order_type === 'home_delivery' ? (
+                                <div className="text-[10px] text-zinc-300 space-y-0.5">
+                                  <p><span className="text-zinc-500">Method:</span> {o.payment_method || 'Cash on Delivery'}</p>
+                                  {o.payment_method === 'Online Payment (QR Code)' && (
+                                    <>
+                                      <p><span className="text-zinc-500">Name:</span> {o.account_holder_name}</p>
+                                      <p><span className="text-zinc-500">Mobile:</span> {o.payer_mobile_number}</p>
+                                      <p><span className="text-zinc-500">Txn ID:</span> {o.transaction_id || 'Not Provided'}</p>
+                                    </>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-[10px] text-zinc-500">Pay at Restaurant</span>
+                              )}
                             </td>
                             <td className="py-3">
                               <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
@@ -2726,16 +2738,7 @@ export default function AdminDashboard({
                             </td>
                             <td className="py-3 text-right">
                               <div className="flex items-center justify-end space-x-1.5">
-                                <select 
-                                  value={o.payment_status} 
-                                  onChange={(e) => handleUpdatePaymentStatus(o.id, e.target.value)}
-                                  className="bg-zinc-900 border border-zinc-800 rounded px-1.5 py-1 text-[10px] text-white focus:outline-none"
-                                >
-                                  <option value="Pending">Pending</option>
-                                  <option value="Paid">Paid</option>
-                                  <option value="Failed">Failed</option>
-                                </select>
-                                
+
                                 <select 
                                   value={o.order_status} 
                                   onChange={(e) => handleUpdateOrderStatus(o.id, e.target.value)}
