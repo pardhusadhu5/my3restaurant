@@ -910,7 +910,7 @@ export default function MenuPage({
                 <div className="bg-zinc-950/40 rounded-xl p-4 border border-zinc-900/80 space-y-4">
                   <span className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Payment Method</span>
                   
-                  {paymentQRs.some(qr => qr.is_active) ? (
+                  {(paymentQRs || []).some(qr => qr.is_active) ? (
                     <div className="space-y-4">
                       <div className="flex space-x-3">
                         <button
@@ -941,7 +941,7 @@ export default function MenuPage({
                         <div className="flex flex-col items-center p-4 bg-zinc-900/50 rounded-xl border border-gold/30">
                           <p className="text-xs text-zinc-400 mb-3 text-center">Scan this QR code using any UPI app (PhonePe, GPay, Paytm) to pay <span className="font-bold text-gold">₹{(eligibilityResult?.eligible ? eligibilityResult.finalAmount : cartSubtotal).toFixed(2)}</span></p>
                           <img 
-                            src={paymentQRs.find(qr => qr.is_active)?.image_url} 
+                            src={(paymentQRs || []).find(qr => qr.is_active)?.image_url} 
                             alt="Payment QR" 
                             className="w-48 h-48 object-contain bg-white p-2 rounded-xl mb-4"
                           />
