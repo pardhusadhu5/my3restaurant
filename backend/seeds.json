@@ -2320,5 +2320,6 @@
   "customers": [],
   "first_order_discounts": [],
   "orders": [],
-  "customer_first_order_uses": []
+  "customer_first_order_uses": [],
+  "payment_qr_codes": []
 }

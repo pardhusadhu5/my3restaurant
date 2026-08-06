@@ -24,7 +24,8 @@ export default function MenuPage({
   restaurantSettings,
   contactInfo,
   categories,
-  menuItems
+  menuItems,
+  paymentQRs = []
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -57,8 +58,16 @@ export default function MenuPage({
   const [loadingEligibility, setLoadingEligibility] = useState(false);
   const [checkoutSubmitting, setCheckoutSubmitting] = useState(false);
   
-  // Payment simulation state
-  const [paymentStatus, setPaymentStatus] = useState(null); // 'success', 'failed', or null
+  // Order flow states
+  const [orderType, setOrderType] = useState('dine_in'); // 'dine_in' or 'home_delivery'
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [deliveryLandmark, setDeliveryLandmark] = useState('');
+  const [specialInstructions, setSpecialInstructions] = useState('');
+  
+  // Payment states
+  const [showPaymentQR, setShowPaymentQR] = useState(false);
+  const [selectedQR, setSelectedQR] = useState(null);
+  const [paymentDone, setPaymentDone] = useState(false);
   const [createdOrder, setCreatedOrder] = useState(null);
 
   // Sync cart to localStorage
@@ -163,13 +172,23 @@ export default function MenuPage({
   };
 
   // WhatsApp Message Formatter
-  const formatWhatsAppMessage = (orderId, name, phone, items, subtotal, discountAmt, finalTotal) => {
+  const formatWhatsAppMessage = (orderId, name, phone, items, subtotal, discountAmt, finalTotal, type, address, landmark, instructions, payStatus) => {
     const restName = restaurantSettings.name || 'Mythri Family Restaurant';
     let message = `*${restName} - Order Receipt*\n`;
     message += `----------------------------------------\n`;
     message += `*Order ID:* ${orderId}\n`;
     message += `*Customer:* ${name}\n`;
     message += `*Phone:* ${phone}\n`;
+    
+    if (type === 'home_delivery') {
+      message += `*Order Type:* Home Delivery 🚚\n`;
+      message += `*Delivery Address:* ${address}\n`;
+      if (landmark) message += `*Landmark:* ${landmark}\n`;
+      if (instructions) message += `*Instructions:* ${instructions}\n`;
+    } else {
+      message += `*Order Type:* Dine In 🍽️\n`;
+    }
+    
     message += `----------------------------------------\n`;
     message += `*Items Ordered:*\n`;
     items.forEach(item => {
@@ -182,7 +201,15 @@ export default function MenuPage({
     }
     message += `*Final Amount:* ₹${(Number(finalTotal) || 0).toFixed(2)}\n`;
     message += `----------------------------------------\n`;
-    message += `*Payment Status:* Cash on Delivery / Pay at Restaurant\n`;
+    
+    if (type === 'home_delivery' && payStatus === 'Paid via QR') {
+      message += `*Payment Status:* Paid via QR ✅\n`;
+    } else if (type === 'home_delivery') {
+      message += `*Payment Status:* Cash on Delivery 💵\n`;
+    } else {
+      message += `*Payment Status:* Pay at Restaurant 🍽️\n`;
+    }
+    
     message += `Thank you for your order! Your receipt is ready.`;
     return message;
   };
@@ -194,11 +221,21 @@ export default function MenuPage({
       return;
     }
 
+    if (orderType === 'home_delivery' && !deliveryAddress) {
+      alert('Please fill in your Delivery Address.');
+      return;
+    }
+
     setCheckoutSubmitting(true);
     try {
       const discount = eligibilityResult?.eligible ? eligibilityResult.discount : null;
       const discountAmt = eligibilityResult?.eligible ? eligibilityResult.discountAmount : 0;
       const finalAmt = eligibilityResult?.eligible ? eligibilityResult.finalAmount : cartSubtotal;
+
+      let paymentStateText = 'Pending';
+      if (orderType === 'home_delivery' && paymentDone) {
+        paymentStateText = 'Paid via QR';
+      }
 
       const orderData = {
         customer_name: customerName,
@@ -210,8 +247,13 @@ export default function MenuPage({
         discount_amount: discountAmt,
         final_amount: finalAmt,
         is_first_order: eligibilityResult?.eligible ? (eligibilityResult.isAutomaticFirstOrder ? true : !!discount) : false,
-        payment_status: 'Pending',
-        order_status: 'Pending'
+        payment_status: paymentStateText,
+        order_status: 'Pending',
+        // Pass extra details (backend might ignore these if not in schema, but good to have)
+        order_type: orderType,
+        delivery_address: deliveryAddress,
+        delivery_landmark: deliveryLandmark,
+        special_instructions: specialInstructions
       };
 
       const order = await api.createOrder(orderData);
@@ -224,7 +266,12 @@ export default function MenuPage({
         order.items,
         order.original_amount,
         order.discount_amount || 0,
-        order.final_amount
+        order.final_amount,
+        orderType,
+        deliveryAddress,
+        deliveryLandmark,
+        specialInstructions,
+        paymentStateText
       );
       
       const url = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
@@ -236,6 +283,12 @@ export default function MenuPage({
       setCustomerName('');
       setCustomerPhone('');
       setCustomerEmail('');
+      setDeliveryAddress('');
+      setDeliveryLandmark('');
+      setSpecialInstructions('');
+      setPaymentDone(false);
+      setShowPaymentQR(false);
+      setOrderType('dine_in');
       setCheckoutSubmitting(false);
     } catch (err) {
       console.error('Error submitting order:', err);
@@ -631,40 +684,125 @@ export default function MenuPage({
 
               {/* Form Inputs */}
               <div className="space-y-4">
+                
+                {/* Order Type Selection */}
                 <div>
-                  <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Your Name *</label>
-                  <input 
-                    type="text"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="Enter your full name"
-                    className="w-full px-4 py-3 bg-zinc-900/60 border border-zinc-800 focus:border-gold rounded-xl text-white text-xs focus:outline-none transition"
-                    required
-                  />
+                  <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">Order Type *</label>
+                  <div className="flex space-x-3">
+                    <button
+                      type="button"
+                      onClick={() => setOrderType('dine_in')}
+                      className={`flex-1 py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition border ${
+                        orderType === 'dine_in'
+                          ? 'bg-gold/10 border-gold text-gold shadow-gold'
+                          : 'bg-zinc-900/60 border-zinc-800 text-zinc-400 hover:bg-zinc-800'
+                      }`}
+                    >
+                      Dine In
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setOrderType('home_delivery')}
+                      className={`flex-1 py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition border ${
+                        orderType === 'home_delivery'
+                          ? 'bg-gold/10 border-gold text-gold shadow-gold'
+                          : 'bg-zinc-900/60 border-zinc-800 text-zinc-400 hover:bg-zinc-800'
+                      }`}
+                    >
+                      Home Delivery
+                    </button>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Phone Number (First-time check) *</label>
-                  <input 
-                    type="tel"
-                    value={customerPhone}
-                    onChange={(e) => setCustomerPhone(e.target.value)}
-                    placeholder="e.g. 9876543210"
-                    className="w-full px-4 py-3 bg-zinc-900/60 border border-zinc-800 focus:border-gold rounded-xl text-white text-xs focus:outline-none transition"
-                    required
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Your Name *</label>
+                    <input 
+                      type="text"
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      placeholder="Enter your full name"
+                      className="w-full px-4 py-3 bg-zinc-900/60 border border-zinc-800 focus:border-gold rounded-xl text-white text-xs focus:outline-none transition"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Phone Number *</label>
+                    <input 
+                      type="tel"
+                      value={customerPhone}
+                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      placeholder="e.g. 9876543210"
+                      className="w-full px-4 py-3 bg-zinc-900/60 border border-zinc-800 focus:border-gold rounded-xl text-white text-xs focus:outline-none transition"
+                      required
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Email Address (Optional)</label>
-                  <input 
-                    type="email"
-                    value={customerEmail}
-                    onChange={(e) => setCustomerEmail(e.target.value)}
-                    placeholder="Enter your email"
-                    className="w-full px-4 py-3 bg-zinc-900/60 border border-zinc-800 focus:border-gold rounded-xl text-white text-xs focus:outline-none transition"
-                  />
-                </div>
+                {orderType === 'home_delivery' && (
+                  <>
+                    <div>
+                      <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Delivery Address *</label>
+                      <textarea
+                        value={deliveryAddress}
+                        onChange={(e) => setDeliveryAddress(e.target.value)}
+                        placeholder="Enter full delivery address"
+                        rows="2"
+                        className="w-full px-4 py-3 bg-zinc-900/60 border border-zinc-800 focus:border-gold rounded-xl text-white text-xs focus:outline-none transition resize-none"
+                        required
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Landmark (Optional)</label>
+                        <input 
+                          type="text"
+                          value={deliveryLandmark}
+                          onChange={(e) => setDeliveryLandmark(e.target.value)}
+                          placeholder="e.g. Near Metro Station"
+                          className="w-full px-4 py-3 bg-zinc-900/60 border border-zinc-800 focus:border-gold rounded-xl text-white text-xs focus:outline-none transition"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Email Address (Optional)</label>
+                        <input 
+                          type="email"
+                          value={customerEmail}
+                          onChange={(e) => setCustomerEmail(e.target.value)}
+                          placeholder="Enter your email"
+                          className="w-full px-4 py-3 bg-zinc-900/60 border border-zinc-800 focus:border-gold rounded-xl text-white text-xs focus:outline-none transition"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Special Instructions (Optional)</label>
+                      <input 
+                        type="text"
+                        value={specialInstructions}
+                        onChange={(e) => setSpecialInstructions(e.target.value)}
+                        placeholder="e.g. Less spicy, Extra napkins"
+                        className="w-full px-4 py-3 bg-zinc-900/60 border border-zinc-800 focus:border-gold rounded-xl text-white text-xs focus:outline-none transition"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {orderType === 'dine_in' && (
+                  <div>
+                    <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Email Address (Optional)</label>
+                    <input 
+                      type="email"
+                      value={customerEmail}
+                      onChange={(e) => setCustomerEmail(e.target.value)}
+                      placeholder="Enter your email"
+                      className="w-full px-4 py-3 bg-zinc-900/60 border border-zinc-800 focus:border-gold rounded-xl text-white text-xs focus:outline-none transition"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Eligibility Verification Messages */}
@@ -751,15 +889,87 @@ export default function MenuPage({
                 </div>
               </div>
 
+              {/* Payment Section for Home Delivery */}
+              {orderType === 'home_delivery' && (
+                <div className="bg-zinc-950/40 rounded-xl p-4 border border-zinc-900/80 space-y-4">
+                  <span className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Payment Method</span>
+                  
+                  {paymentQRs.some(qr => qr.is_active) ? (
+                    <div className="space-y-4">
+                      <div className="flex space-x-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowPaymentQR(true);
+                            setPaymentDone(false);
+                          }}
+                          className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold uppercase tracking-wider transition border ${
+                            showPaymentQR
+                              ? 'bg-gold/10 border-gold text-gold'
+                              : 'bg-zinc-900/60 border-zinc-800 text-zinc-400 hover:bg-zinc-800'
+                          }`}
+                        >
+                          Pay via QR
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowPaymentQR(false);
+                            setPaymentDone(false);
+                          }}
+                          className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold uppercase tracking-wider transition border ${
+                            !showPaymentQR
+                              ? 'bg-gold/10 border-gold text-gold'
+                              : 'bg-zinc-900/60 border-zinc-800 text-zinc-400 hover:bg-zinc-800'
+                          }`}
+                        >
+                          Cash on Delivery
+                        </button>
+                      </div>
+
+                      {showPaymentQR && (
+                        <div className="flex flex-col items-center justify-center p-4 bg-zinc-900/50 rounded-xl border border-gold/30">
+                          <p className="text-xs text-zinc-400 mb-3 text-center">Scan this QR code using any UPI app (PhonePe, GPay, Paytm) to pay <span className="font-bold text-gold">₹{(eligibilityResult?.eligible ? eligibilityResult.finalAmount : cartSubtotal).toFixed(2)}</span></p>
+                          <img 
+                            src={paymentQRs.find(qr => qr.is_active)?.image_url} 
+                            alt="Payment QR" 
+                            className="w-48 h-48 object-contain bg-white p-2 rounded-xl mb-4"
+                          />
+                          <label className="flex items-center space-x-2 cursor-pointer bg-black/40 p-3 rounded-lg border border-zinc-800 w-full justify-center">
+                            <input 
+                              type="checkbox"
+                              checked={paymentDone}
+                              onChange={(e) => setPaymentDone(e.target.checked)}
+                              className="w-4 h-4 rounded text-gold bg-zinc-900 border-zinc-800 focus:ring-gold"
+                            />
+                            <span className="text-white font-bold text-xs uppercase tracking-wide">I have completed the payment</span>
+                          </label>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-xs text-zinc-400">
+                      Cash on Delivery is the only available payment method right now.
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* WhatsApp Checkout Button */}
               <div className="pt-2">
                 <button 
                   onClick={handlePlaceOrder}
-                  disabled={checkoutSubmitting || loadingEligibility}
+                  disabled={checkoutSubmitting || loadingEligibility || (orderType === 'home_delivery' && showPaymentQR && !paymentDone)}
                   className="w-full py-3.5 bg-gold hover:bg-gold-light disabled:bg-zinc-800 disabled:text-zinc-600 text-black font-extrabold rounded-xl transition text-xs uppercase tracking-wider shadow-gold-lg flex items-center justify-center space-x-2"
                 >
                   <MessageSquare size={14} />
-                  <span>{checkoutSubmitting ? 'Placing Order...' : 'Place Order on WhatsApp'}</span>
+                  <span>
+                    {checkoutSubmitting 
+                      ? 'Placing Order...' 
+                      : (orderType === 'home_delivery' && showPaymentQR && paymentDone)
+                        ? 'Payment Done, Place Order on WhatsApp'
+                        : 'Place Order on WhatsApp'}
+                  </span>
                 </button>
               </div>
             </>

@@ -24,6 +24,7 @@ export default function App() {
   const [reviews, setReviews] = useState([]);
   const [orders, setOrders] = useState([]);
   const [discounts, setDiscounts] = useState([]);
+  const [paymentQRs, setPaymentQRs] = useState([]);
 
   // Admin authentication state
   const [isAdmin, setIsAdmin] = useState(!!localStorage.getItem('mythri_admin_token'));
@@ -51,7 +52,8 @@ export default function App() {
         cats,
         items,
         images,
-        feedback
+        feedback,
+        pQRs
       ] = await Promise.all([
         api.getWebsiteSettings(),
         api.getRestaurantSettings(),
@@ -61,7 +63,8 @@ export default function App() {
         api.getCategories(),
         api.getMenuItems(),
         api.getGallery(),
-        api.getReviews()
+        api.getReviews(),
+        api.getPaymentQRs()
       ]);
 
       setWebsiteSettings(webSets);
@@ -73,6 +76,7 @@ export default function App() {
       setMenuItems(items);
       setGallery(images);
       setReviews(feedback);
+      setPaymentQRs(pQRs);
       setError(null);
 
       // Fetch admin data if logged in and on the admin route
@@ -138,6 +142,15 @@ export default function App() {
         break;
       case 'qr_codes':
         setQRCode(data);
+        break;
+      case 'payment_qrs':
+        if (data.action === 'create') {
+          setPaymentQRs(prev => [data.qr, ...prev]);
+        } else if (data.action === 'update') {
+          setPaymentQRs(prev => prev.map(q => q.id === data.qr.id ? data.qr : q));
+        } else if (data.action === 'delete') {
+          setPaymentQRs(prev => prev.filter(q => q.id !== data.id));
+        }
         break;
       case 'menu_categories':
         if (data.action === 'create') {
@@ -320,6 +333,7 @@ export default function App() {
           contactInfo={contactInfo}
           categories={categories}
           menuItems={menuItems}
+          paymentQRs={paymentQRs}
         />
       );
     }
@@ -341,6 +355,7 @@ export default function App() {
           reviews={reviews}
           orders={orders}
           discounts={discounts}
+          paymentQRs={paymentQRs}
         />
       );
     }

@@ -26,7 +26,8 @@ import {
   Search,
   Download,
   Gift,
-  ShoppingBag
+  ShoppingBag,
+  CreditCard
 } from 'lucide-react';
 
 export default function AdminDashboard({ 
@@ -43,7 +44,8 @@ export default function AdminDashboard({
   gallery,
   reviews,
   orders = [],
-  discounts = []
+  discounts = [],
+  paymentQRs = []
 }) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -66,6 +68,7 @@ export default function AdminDashboard({
   const [specialUrlError, setSpecialUrlError] = useState('');
   const [qrForm, setQrForm] = useState({ ...qrCode });
   const [reviewForm, setReviewForm] = useState({ customer_name: '', review_text: '', rating: 5, photo_url: '', status: 'visible', isEdit: false, id: null });
+  const [paymentQrForm, setPaymentQrForm] = useState({ name: '', image_url: '', is_active: false, isEdit: false, id: null });
   const [galleryForm, setGalleryForm] = useState({ image_url: '', category: 'Food', display_order: 0 });
   const [galleryUploadType, setGalleryUploadType] = useState('file'); // 'file' or 'url'
   const [galleryFileError, setGalleryFileError] = useState('');
@@ -611,6 +614,37 @@ export default function AdminDashboard({
     }
   };
 
+  // Payment QR Submit
+  const handlePaymentQrSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setActionLoading(true);
+      if (paymentQrForm.isEdit) {
+        await api.updatePaymentQR(paymentQrForm.id, paymentQrForm);
+        triggerSuccess('Payment QR updated!');
+      } else {
+        await api.createPaymentQR(paymentQrForm);
+        triggerSuccess('Payment QR added!');
+      }
+      setPaymentQrForm({ name: '', image_url: '', is_active: false, isEdit: false, id: null });
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeletePaymentQr = async (id) => {
+    if (confirm('Delete this Payment QR?')) {
+      try {
+        await api.deletePaymentQR(id);
+        triggerSuccess('Payment QR deleted');
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+  };
+
   // Review Submit
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
@@ -720,6 +754,7 @@ export default function AdminDashboard({
     { id: 'contact', name: 'Contact Info', icon: Phone },
     { id: 'gallery', name: 'Gallery', icon: ImageIcon },
     { id: 'qr', name: 'QR Menu Management', icon: QrCode },
+    { id: 'payment-qr', name: 'Payment Settings', icon: CreditCard },
     { id: 'hero', name: 'Hero Section Management', icon: Home },
     { id: 'reviews', name: 'Customer Reviews', icon: Star },
     { id: 'settings', name: 'Website Settings', icon: Settings },
@@ -2026,6 +2061,172 @@ export default function AdminDashboard({
                 </div>
               </div>
 
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* TAB: PAYMENT SETTINGS */}
+          {/* ============================================================== */}
+          {activeTab === 'payment-qr' && (
+            <div className="space-y-6">
+              
+              {/* Payment QR Form */}
+              <div className="glass-panel p-6 rounded-2xl">
+                <div className="flex items-center justify-between border-b border-zinc-900 pb-3 mb-6">
+                  <div>
+                    <h3 className="text-base font-bold text-white font-serif tracking-wide">
+                      {paymentQrForm.isEdit ? 'Edit Payment QR Code' : 'Add New Payment QR Code'}
+                    </h3>
+                    <p className="text-zinc-500 text-xs mt-1">Upload QR codes for UPI payments (e.g. PhonePe, GPay, Paytm) for Home Delivery orders.</p>
+                  </div>
+                  {paymentQrForm.isEdit && (
+                    <button 
+                      onClick={() => setPaymentQrForm({ name: '', image_url: '', is_active: false, isEdit: false, id: null })}
+                      className="text-xs text-gold hover:text-gold-light"
+                    >
+                      Cancel Edit
+                    </button>
+                  )}
+                </div>
+
+                <form onSubmit={handlePaymentQrSubmit} className="space-y-4 text-xs">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-zinc-500 mb-1">QR Code Name / Label *</label>
+                      <input 
+                        type="text"
+                        value={paymentQrForm.name}
+                        onChange={(e) => setPaymentQrForm(prev => ({ ...prev, name: e.target.value }))}
+                        className="w-full px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                        placeholder="e.g., PhonePe UPI QR"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-zinc-500 mb-1">Upload QR Image *</label>
+                      <div className="flex space-x-2">
+                        <input 
+                          type="text"
+                          value={paymentQrForm.image_url}
+                          onChange={(e) => setPaymentQrForm(prev => ({ ...prev, image_url: e.target.value }))}
+                          className="flex-1 px-3 py-2 bg-zinc-900/60 border border-zinc-800 focus:border-gold/50 focus:outline-none rounded-xl text-white text-sm"
+                          placeholder="Image URL"
+                          required
+                        />
+                        <label className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 cursor-pointer rounded-xl border border-zinc-700 text-zinc-300 flex items-center justify-center transition">
+                          <Upload size={16} />
+                          <input 
+                            type="file" 
+                            accept="image/png, image/jpeg, image/webp" 
+                            className="hidden" 
+                            onChange={(e) => {
+                              setUploading(true);
+                              handleImageUpload(e, (url) => {
+                                setPaymentQrForm(prev => ({ ...prev, image_url: url }));
+                                setUploading(false);
+                              });
+                            }}
+                          />
+                        </label>
+                      </div>
+                      {uploading && <p className="text-gold text-xs mt-1">Uploading...</p>}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-3 pt-2">
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input 
+                        type="checkbox"
+                        checked={paymentQrForm.is_active}
+                        onChange={(e) => setPaymentQrForm(prev => ({ ...prev, is_active: e.target.checked }))}
+                        className="w-4 h-4 rounded text-gold bg-zinc-900 border-zinc-800 focus:ring-gold"
+                      />
+                      <span className="text-zinc-300 font-medium">Set as Active QR Code</span>
+                    </label>
+                    <span className="text-zinc-500 italic">(Only one can be active at a time)</span>
+                  </div>
+
+                  <div className="pt-2">
+                    <button 
+                      type="submit" 
+                      disabled={actionLoading}
+                      className="px-6 py-2.5 bg-gold hover:bg-gold-light text-black text-xs font-bold rounded-lg transition flex items-center space-x-1"
+                    >
+                      <Save size={14} />
+                      <span>{paymentQrForm.isEdit ? 'Update Payment QR' : 'Save Payment QR'}</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Payment QRs List */}
+              <div className="glass-panel p-6 rounded-2xl space-y-4">
+                <h3 className="text-sm font-bold text-white font-serif tracking-wide border-b border-zinc-900 pb-3">Saved Payment QR Codes</h3>
+                
+                {paymentQRs.length === 0 ? (
+                  <div className="text-center py-8 text-zinc-500 text-xs italic">
+                    No payment QR codes added yet. Add one above to accept QR payments.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {paymentQRs.map(qr => (
+                      <div key={qr.id} className={`p-4 rounded-xl border ${qr.is_active ? 'border-gold bg-gold/5' : 'border-zinc-800 bg-zinc-900/50'} flex flex-col items-center text-center relative group`}>
+                        {qr.is_active && (
+                          <div className="absolute top-3 right-3 text-gold text-xs font-bold px-2 py-1 bg-gold/10 rounded">
+                            ACTIVE
+                          </div>
+                        )}
+                        <img 
+                          src={qr.image_url} 
+                          alt={qr.name} 
+                          className="w-32 h-32 object-contain bg-white p-2 rounded-lg mb-3 shadow-md"
+                        />
+                        <h4 className="text-sm font-bold text-white mb-1 truncate w-full" title={qr.name}>{qr.name}</h4>
+                        <div className="text-xs text-zinc-500 mb-4 truncate w-full">ID: {qr.id}</div>
+                        
+                        <div className="flex space-x-2 w-full justify-center mt-auto">
+                          {!qr.is_active && (
+                            <button
+                              onClick={() => {
+                                api.updatePaymentQR(qr.id, { is_active: true })
+                                  .then(() => triggerSuccess(`${qr.name} set as active`))
+                                  .catch(err => alert(err.message));
+                              }}
+                              className="p-1.5 text-zinc-400 hover:text-gold hover:bg-gold/10 rounded transition"
+                              title="Set Active"
+                            >
+                              <Check size={16} />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => {
+                              setPaymentQrForm({
+                                id: qr.id,
+                                name: qr.name,
+                                image_url: qr.image_url,
+                                is_active: qr.is_active,
+                                isEdit: true
+                              });
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                            className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded transition"
+                            title="Edit"
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDeletePaymentQr(qr.id)}
+                            className="p-1.5 text-zinc-400 hover:text-red-400 hover:bg-red-400/10 rounded transition"
+                            title="Delete"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

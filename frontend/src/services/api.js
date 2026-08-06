@@ -136,6 +136,41 @@ export const api = {
     return res.json();
   },
 
+  // Payment QRs
+  async getPaymentQRs() {
+    const res = await fetch(`${API_BASE}/payment-qrs`);
+    return res.json();
+  },
+
+  async createPaymentQR(qr) {
+    const res = await fetch(`${API_BASE}/payment-qrs`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(qr)
+    });
+    if (!res.ok) throw new Error('Failed to create payment QR');
+    return res.json();
+  },
+
+  async updatePaymentQR(id, updates) {
+    const res = await fetch(`${API_BASE}/payment-qrs/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(updates)
+    });
+    if (!res.ok) throw new Error('Failed to update payment QR');
+    return res.json();
+  },
+
+  async deletePaymentQR(id) {
+    const res = await fetch(`${API_BASE}/payment-qrs/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders()
+    });
+    if (!res.ok) throw new Error('Failed to delete payment QR');
+    return res.json();
+  },
+
   // Categories
   async getCategories() {
     const res = await fetch(`${API_BASE}/categories`);

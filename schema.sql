@@ -129,6 +129,16 @@ CREATE TABLE IF NOT EXISTS qr_codes (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 11. PAYMENT QR CODES
+CREATE TABLE IF NOT EXISTS payment_qr_codes (
+    id TEXT PRIMARY KEY DEFAULT uuid_generate_v4(),
+    image_url TEXT NOT NULL,
+    name TEXT NOT NULL,
+    is_active BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- SEED DATA
 
 -- Insert default singletons if not existing

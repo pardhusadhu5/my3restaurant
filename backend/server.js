@@ -408,6 +408,34 @@ app.put('/api/qr-code', requireAuth, async (req, res) => {
   res.json(updated);
 });
 
+// Payment QR Codes
+app.get('/api/payment-qrs', async (req, res) => {
+  const qrs = await db.getPaymentQRs();
+  res.json(qrs);
+});
+
+app.post('/api/payment-qrs', requireAuth, async (req, res) => {
+  const { name, image_url } = req.body;
+  if (!name || !image_url) return res.status(400).json({ error: 'Name and image_url are required' });
+  const newQR = await db.addPaymentQR(req.body);
+  broadcast('payment_qrs', { action: 'create', qr: newQR });
+  res.status(201).json(newQR);
+});
+
+app.put('/api/payment-qrs/:id', requireAuth, async (req, res) => {
+  const updatedQR = await db.updatePaymentQR(req.params.id, req.body);
+  if (!updatedQR) return res.status(404).json({ error: 'Payment QR not found' });
+  broadcast('payment_qrs', { action: 'update', qr: updatedQR });
+  res.json(updatedQR);
+});
+
+app.delete('/api/payment-qrs/:id', requireAuth, async (req, res) => {
+  await db.deletePaymentQR(req.params.id);
+  broadcast('payment_qrs', { action: 'delete', id: req.params.id });
+  res.json({ success: true });
+});
+
+
 // Menu Categories
 app.get('/api/categories', async (req, res) => {
   const categories = await db.getCategories();
@@ -644,21 +672,63 @@ app.put('/api/orders/:id', requireAuth, async (req, res) => {
 });
 
 // Upload image file endpoint
-app.post('/api/upload', upload.single('image'), (req, res) => {
+const supabase = require('./supabase');
+
+app.post('/api/upload', upload.single('image'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'Please select an image file to upload.' });
   }
   
-  // Use Cloudinary URL if available, otherwise construct local URL
-  const fileUrl = (req.file.path && req.file.path.startsWith('http'))
-    ? req.file.path
-    : `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+  try {
+    let fileUrl = '';
     
-  res.status(201).json({
-    success: true,
-    file_path: fileUrl,
-    filename: req.file.filename || req.file.public_id || ''
-  });
+    // Use Cloudinary URL if available
+    if (req.file.path && req.file.path.startsWith('http')) {
+      fileUrl = req.file.path;
+      return res.status(201).json({
+        success: true,
+        file_path: fileUrl,
+        filename: req.file.filename || req.file.public_id || ''
+      });
+    }
+
+    const uniqueFilename = `${Date.now()}_${req.file.originalname.replace(/\s+/g, '_')}`;
+
+    if (supabase) {
+      // Upload to Supabase Storage
+      const fileBuffer = fs.readFileSync(req.file.path);
+      const { data, error } = await supabase
+        .storage
+        .from('public_assets')
+        .upload(uniqueFilename, fileBuffer, {
+          contentType: req.file.mimetype,
+          upsert: false
+        });
+        
+      if (error) {
+        throw new Error(`Supabase Storage Error: ${error.message}`);
+      }
+      
+      // Get public URL
+      const { data: publicUrlData } = supabase.storage.from('public_assets').getPublicUrl(uniqueFilename);
+      fileUrl = publicUrlData.publicUrl;
+      
+      // Clean up local multer file
+      fs.unlinkSync(req.file.path);
+    } else {
+      // Construct the local static file URL
+      fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    }
+
+    res.status(201).json({
+      success: true,
+      file_path: fileUrl,
+      filename: req.file.filename
+    });
+  } catch (error) {
+    console.error('Upload Error:', error);
+    res.status(500).json({ error: 'Failed to upload image. ' + error.message });
+  }
 });
 
 app.get('/api/status', async (req, res) => {
