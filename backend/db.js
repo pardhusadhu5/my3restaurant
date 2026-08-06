@@ -89,35 +89,7 @@ async function ensureAdminSeeded() {
       // Keep admin credentials updated
       await pool.query('UPDATE admins SET password = $1 WHERE username = $2', [targetHash, 'My3']);
     }
-    // Auto-update website_settings if first-order configurations are missing
-    if (local.website_settings && local.website_settings.first_order_discount_enabled === undefined) {
-      console.log('Seeding automatic first-order discount configurations in local database...');
-      local.website_settings.first_order_discount_enabled = true;
-      local.website_settings.first_order_min_amount = 250;
-      local.website_settings.first_order_discount_amount = 100;
-      needsWrite = true;
-    }
-
-    // Auto-update if customer_first_order_uses doesn't exist
-    if (!local.customer_first_order_uses) {
-      console.log('Creating customer_first_order_uses array in local database...');
-      local.customer_first_order_uses = [];
-      needsWrite = true;
-    }
-
-    // Auto-update if payment_qr_codes doesn't exist
-    if (!local.payment_qr_codes) {
-      console.log('Creating payment_qr_codes array in local database...');
-      local.payment_qr_codes = [];
-      needsWrite = true;
-    }
-
-    if (needsWrite) {
-      writeLocalDB(local);
-    }
-
-    
-    return local;
+    return;
   } catch (err) {
     console.error('Error ensuring admin is seeded:', err.message);
   }

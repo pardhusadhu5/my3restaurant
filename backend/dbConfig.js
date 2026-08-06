@@ -13,8 +13,7 @@ if (connectionString) {
     }
   });
 } else if (process.env.NODE_ENV === 'production') {
-  console.error('CRITICAL ERROR: DATABASE_URL environment variable is missing in production.');
-  process.exit(1);
+  console.error('CRITICAL ERROR: DATABASE_URL environment variable is missing in production. Falling back to local development mock database mode. Data will not persist!');
 } else {
   console.warn('DATABASE_URL is missing. Running in local development mock database mode.');
 }

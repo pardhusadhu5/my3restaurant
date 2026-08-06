@@ -1,5 +1,11 @@
+// Catch async errors automatically
+require('express-async-errors');
+
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const compression = require('compression');
+const cookieParser = require('cookie-parser');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
@@ -9,13 +15,41 @@ const nodemailer = require('nodemailer');
 require('dotenv').config();
 const { cloudinary, isCloudinaryConfigured, getMulterStorage } = require('./cloudinaryConfig');
 
+// Global unhandled error logging (prevents silent crashes)
+process.on('uncaughtException', (err) => {
+  console.error('CRITICAL: Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('CRITICAL: Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Enable CORS for frontend development server
+// Production Middleware
+app.use(helmet({
+  crossOriginResourcePolicy: false // Allow cross-origin images to load
+}));
+app.use(compression());
+app.use(cookieParser());
+
+// Enable CORS for frontend development server & production
+const allowedOrigins = [
+  'http://localhost:5173',
+  process.env.FRONTEND_URL || '*'
+];
+
 app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+    return callback(new Error(msg), false);
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
@@ -758,20 +792,21 @@ app.get('/api/status', async (req, res) => {
   });
 });
 
+// API 404 Handler - Catch unknown API routes
+app.all('/api/*', (req, res) => {
+  res.status(404).json({ error: `API Route not found: ${req.method} ${req.originalUrl}` });
+});
+
 // Serve static files from the React frontend build
 const frontendDistPath = path.join(__dirname, '../frontend/dist');
 app.use(express.static(frontendDistPath));
 
 // Anything that doesn't match an API route, send back the index.html file
-app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/api')) {
-    return next();
-  }
+app.get('*', (req, res) => {
   res.sendFile(path.join(frontendDistPath, 'index.html'));
 });
 
 // Global error handler
-
 app.use((err, req, res, next) => {
   console.error('API Error:', err.message);
   res.status(err.status || 500).json({
