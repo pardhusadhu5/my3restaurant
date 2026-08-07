@@ -2163,13 +2163,13 @@ export default function AdminDashboard({
               <div className="glass-panel p-6 rounded-2xl space-y-4">
                 <h3 className="text-sm font-bold text-white font-serif tracking-wide border-b border-zinc-900 pb-3">Saved Payment QR Codes</h3>
                 
-                {paymentQRs.length === 0 ? (
+                {(Array.isArray(paymentQRs) ? paymentQRs : []).length === 0 ? (
                   <div className="text-center py-8 text-zinc-500 text-xs italic">
                     No payment QR codes added yet. Add one above to accept QR payments.
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {paymentQRs.map(qr => (
+                    {(Array.isArray(paymentQRs) ? paymentQRs : []).map(qr => (
                       <div key={qr.id} className={`p-4 rounded-xl border ${qr.is_active ? 'border-gold bg-gold/5' : 'border-zinc-800 bg-zinc-900/50'} flex flex-col items-center text-center relative group`}>
                         {qr.is_active && (
                           <div className="absolute top-3 right-3 text-gold text-xs font-bold px-2 py-1 bg-gold/10 rounded">
